@@ -7,6 +7,7 @@ package visao;
 
 import conexao.Conexao;
 import dao.CandidatoDAO;
+import dao.EleitorDAO;
 import dao.PartidoDAO;
 import dao.VotoDAO;
 import dao.UrnaDAO;
@@ -16,6 +17,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import modelo.CadCandidato;
 import modelo.CadEleitor;
 import modelo.Voto;
@@ -30,6 +32,7 @@ public class Urna extends javax.swing.JFrame {
     PartidoDAO   partidoDAO   = new PartidoDAO();
     VotoDAO      votoDAO      = new VotoDAO();
     UrnaDAO      urna         = new UrnaDAO();
+    EleitorDAO   eleitorDAO   = new EleitorDAO();
     
     CadEleitor eleitor = null;
     CadCandidato candidatoVoto = null;
@@ -38,16 +41,19 @@ public class Urna extends javax.swing.JFrame {
     
     CadCandidato candidatos[] = candidatoDAO.getVetorCandidato();
     Voto voto[] = votoDAO.getVetorVoto();
+    CadEleitor eleitores[]  ;//  = eleitorDAO.getVetorEleitor();
     boolean primeiroDigito;
     
     /**
      * Creates new form UrnaDAO
      * @throws java.io.IOException
      */
-    public Urna(CadEleitor eleitor, UrnaDAO urna){
+    public Urna(CadEleitor eleitor, UrnaDAO urna, EleitorDAO eleitorDAO){
         initComponents();
         this.eleitor = eleitor;
         this.votoContabilizar = new Voto(urna);
+        this.eleitorDAO = eleitorDAO;
+        this.eleitores = this.eleitorDAO.getVetorEleitor();
         primeiroDigito = false;
         this.requestFocus();
         this.getContentPane().setBackground(new java.awt.Color(245,245,245));
@@ -164,6 +170,7 @@ public class Urna extends javax.swing.JFrame {
         setBounds(new java.awt.Rectangle(0, 0, 0, 0));
         setUndecorated(true);
         setPreferredSize(new java.awt.Dimension(930, 570));
+        getContentPane().setLayout(null);
 
         panel1.setBackground(new java.awt.Color(14, 7, 7));
 
@@ -449,6 +456,9 @@ public class Urna extends javax.swing.JFrame {
                 .addGap(6, 6, 6))
         );
 
+        getContentPane().add(panel1);
+        panel1.setBounds(556, 73, 336, 431);
+
         panel3.setBackground(new java.awt.Color(122, 113, 113));
 
         panel2.setBackground(new java.awt.Color(254, 254, 254));
@@ -544,16 +554,16 @@ public class Urna extends javax.swing.JFrame {
                                     .addComponent(label8, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(panel3Layout.createSequentialGroup()
+                                        .addGap(10, 10, 10)
+                                        .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(lblCandidatoPartido, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(lblCandidatoNome, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                    .addGroup(panel3Layout.createSequentialGroup()
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
                                         .addComponent(texPrimeiroDigito, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(texSegundoDigito, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 173, Short.MAX_VALUE))
-                                    .addGroup(panel3Layout.createSequentialGroup()
-                                        .addGap(10, 10, 10)
-                                        .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(lblCandidatoPartido, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(lblCandidatoNome, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 173, Short.MAX_VALUE))))
                             .addGroup(panel3Layout.createSequentialGroup()
                                 .addComponent(label5, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(0, 0, Short.MAX_VALUE)))))
@@ -566,16 +576,15 @@ public class Urna extends javax.swing.JFrame {
                 .addComponent(label5, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(label6, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(texSegundoDigito, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
+                        .addComponent(texPrimeiroDigito, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(panel3Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(texSegundoDigito, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
-                            .addComponent(texPrimeiroDigito, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(panel3Layout.createSequentialGroup()
-                        .addGap(28, 28, 28)
-                        .addComponent(label7, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 34, Short.MAX_VALUE)
+                        .addComponent(label7, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(21, 21, 21)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 38, Short.MAX_VALUE)
                 .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(label9, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblCandidatoNome, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -587,11 +596,18 @@ public class Urna extends javax.swing.JFrame {
                 .addComponent(panel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
+        getContentPane().add(panel3);
+        panel3.setBounds(21, 55, 510, 500);
+
         jLabel1.setFont(new java.awt.Font("Ubuntu", 1, 26)); // NOI18N
         jLabel1.setText("JUSTIÇA");
+        getContentPane().add(jLabel1);
+        jLabel1.setBounds(785, 0, 107, 31);
 
         jLabel3.setFont(new java.awt.Font("Ubuntu", 1, 26)); // NOI18N
         jLabel3.setText("ELEITORAL");
+        getContentPane().add(jLabel3);
+        jLabel3.setBounds(749, 32, 143, 31);
 
         panelIcone.setBackground(new java.awt.Color(254, 254, 254));
 
@@ -612,43 +628,8 @@ public class Urna extends javax.swing.JFrame {
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(21, 21, 21)
-                .addComponent(panel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(25, 25, 25)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(39, 39, 39)
-                        .addComponent(panelIcone, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(73, 73, 73)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(36, 36, 36)
-                                .addComponent(jLabel1))
-                            .addComponent(jLabel3)))
-                    .addComponent(panel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(55, 55, 55)
-                .addComponent(panel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(panelIcone, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addGap(1, 1, 1)
-                        .addComponent(jLabel3)))
-                .addGap(10, 10, 10)
-                .addComponent(panel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
+        getContentPane().add(panelIcone);
+        panelIcone.setBounds(595, 10, 81, 53);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -685,6 +666,23 @@ public class Urna extends javax.swing.JFrame {
         btnNum8.setEnabled(controle);
         btnNum9.setEnabled(controle);
         
+    }
+    
+    private void desabilitandoTelaUrna(){
+        
+            label1.setVisible(false);
+            label2.setVisible(false);
+            label3.setVisible(false);
+            label4.setVisible(false);
+            label5.setVisible(false);
+            label6.setVisible(false);
+            label7.setVisible(false);
+            label8.setVisible(false);
+            label9.setVisible(false);
+            texPrimeiroDigito.setVisible(false);
+            texSegundoDigito.setVisible(false);
+            lblCandidatoNome.setVisible(false);
+            lblCandidatoPartido.setVisible(false);
     }
     
     private void btnNum1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum1ActionPerformed
@@ -925,15 +923,19 @@ public class Urna extends javax.swing.JFrame {
 
     private void btnConfirmaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnConfirmaMouseClicked
 
+        this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+        
         if(candidatoVoto != null){
             for(int i = 0; i < candidatos.length; ++i ){
                 if(candidatos[i] != null){
                     if(candidatoVoto.getNumero() == candidatos[i].getNumero()){
                         candidatos[i].setQtdeVoto(1);
+                        eleitor.setVotou(true);
                         break;
                     }
                 }
             }
+            
             //Criando um arquivo para atualizar os dados do driver
             FileWriter arq = null;
             try {
@@ -943,21 +945,40 @@ public class Urna extends javax.swing.JFrame {
                 Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
             }
             
+            arq = null;
+            try {
+                arq = new FileWriter("./ArquivosJson/Eleitor.json");
+                arq.close();
+            } catch (IOException ex) {
+                Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+            
             for(int i =0; i < candidatos.length; i++){
                 if(candidatos[i] != null){
                     candidatoDAO.inserirJson(candidatos[i]);
                 }
             }
             
-            votoContabilizar.setEleitor(eleitor);
+            for(int i =0; i < eleitores.length; i++){
+                if(eleitores[i] != null){
+                    eleitorDAO.inserirJson(eleitores[i]);
+                }
+            }
+            
+            desabilitandoTelaUrna();
+            
+            votoContabilizar.setCpfEleitor(eleitor.getCpf());
             votoContabilizar.setCandidato(candidatoVoto);
             
             votoDAO.inserir(votoContabilizar);
             votoDAO.inserirJson(votoContabilizar);
+            
+            
+            eleitorDAO.enviaDrive();
             candidatoDAO.enviaDrive();
-            System.out.println("CANDIDATO ENVIADO");
             votoDAO.enviaDrive();
-            System.out.println("VOTO ENVIADO");
+            
             this.dispose();
         }
         

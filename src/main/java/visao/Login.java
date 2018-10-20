@@ -18,6 +18,9 @@ import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import modelo.CadEleitor;
 import dao.UrnaDAO;
+import javax.swing.JOptionPane;
+import util.PPMFileReader;
+import util.PPMImage;
 
 /**
  *
@@ -27,6 +30,7 @@ public class Login extends javax.swing.JFrame {
     
     EleitorDAO eleitorDAO = new EleitorDAO();
     UrnaDAO    urna       = new UrnaDAO(); 
+
       /**
      * Creates new form Login
      */
@@ -39,7 +43,6 @@ public class Login extends javax.swing.JFrame {
         Conexao.service();
         
         eleitorDAO.baixarEleitorJson();
-//        System.out.println(eleitores[0]);
     }
     
     
@@ -181,7 +184,25 @@ public class Login extends javax.swing.JFrame {
     }//GEN-LAST:event_LoginKeyPressed
 
     private void LoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginActionPerformed
-        new Urna(eleitores[0], urna).setVisible(true);
+        
+        boolean entrou = false;
+        if(!texImagemEleitor.getText().equals("")){
+            if(eleitores != null){
+                PPMImage ppm = PPMFileReader.readImage(texImagemEleitor.getText());
+                for(int i = 0; i < eleitores.length; i++ ){
+                    if(eleitores[i] != null){
+                        if(eleitores[i].getImagem().equals(ppm)&&(!eleitores[i].getVotou())){
+                            new Urna(eleitores[i], urna, eleitorDAO).setVisible(true);
+                            entrou = true;
+                        }
+                    }
+                }
+            }
+        }
+        if(entrou == false){
+            JOptionPane.showMessageDialog(null, "NÃO HÁ NENHUM ELEITOR COM ESSA IMAGEM");
+            texImagemEleitor.setText("");
+        }
     }//GEN-LAST:event_LoginActionPerformed
 
     private void btnLocalizarImagemMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnLocalizarImagemMouseExited
