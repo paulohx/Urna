@@ -18,7 +18,7 @@ public class CadCandidato {
     }
 
     public void setQtdeVoto(int qtdeVoto) {
-        this.qtdeVoto = qtdeVoto;
+        this.qtdeVoto += qtdeVoto;
     }
     
     public String getNome(){
@@ -56,6 +56,7 @@ public class CadCandidato {
                 "Cpf:     " + this.cpf                  + "\n" +
                 "Partido: \n"                           +
                 "\tNome:   " + this.partido.getNome()   + "\n" +
-                "\tNumero: " + this.partido.getNumero() + "\n");
+                "\tNumero: " + this.partido.getNumero() + "\n")+
+                "\tQtd de Votos:"+ this.getQtdeVoto()   + "\n";
     }
 }

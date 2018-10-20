@@ -1,5 +1,7 @@
 package modelo;
 
+import util.PPMImage;
+import util.Verifica;
 
 public class CadEleitor {    
         
@@ -8,6 +10,7 @@ public class CadEleitor {
     private int secao;
     private String numeroTitulo;
     private boolean votou;
+    private PPMImage imagem = new PPMImage();
     
     public CadEleitor(){
         this.votou = false;
@@ -24,7 +27,16 @@ public class CadEleitor {
     public String getCpf(){
         return(this.cpf);
     }
-   
+    
+    public boolean setCpf(String cpf){
+        
+        /*Verifica se o cpf esta valido*/
+        if (new Verifica().Cpf(cpf)){
+              this.cpf = cpf;
+              return true;
+        }else{return false;}
+    }
+    
     public int getSecao(){
         return(this.secao);
     }
@@ -49,6 +61,14 @@ public class CadEleitor {
         this.votou = votou;
     }
     
+    public PPMImage getImagem() {
+        return imagem;
+    }
+
+    public void setImagem(PPMImage imagem) {
+        this.imagem = imagem;
+    }
+    
     public String toString(){
              return ("Nome:    " + this.nome                 + "\n" +
                      "Numero:  " + this.numeroTitulo         + "\n" +
@@ -56,5 +76,4 @@ public class CadEleitor {
                      "Secao:   " + this.secao                + "\n" +
                      "Votou:   " + this.votou +                "\n");
     }
-    
 }

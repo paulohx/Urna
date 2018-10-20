@@ -53,7 +53,18 @@ public class CandidatoDAO {
         return "";
     }
     
-    
+     public boolean existeAlgumCandidato(){
+        
+        for (int i = 0; i < candidatos.length; i++) {
+            
+            /*Trata o null pointer exception*/
+            if (candidatos[i] != null){
+                return true;
+            }            
+        }
+        
+        return false;
+    }
     public void baixarCandidatoJson() throws IOException{
         
         Gson gson = new Gson();
@@ -86,6 +97,11 @@ public class CandidatoDAO {
                 candidatos[i] = candidato.get(i);
             }
         }
+    }
+    
+    
+    public CadCandidato[] getVetorCandidato(){
+        return this.candidatos;
     }
     
     public boolean inserirJson(CadCandidato candidato){
@@ -137,5 +153,17 @@ public class CandidatoDAO {
         }
         
         return true;
+    }
+    public CadCandidato getCandidatoByNum(int numero){
+        
+        for (CadCandidato c: this.candidatos){
+            if (c != null){
+                if (c.getNumero() == numero){
+                    return c;
+                }
+            }            
+        }
+
+        return null;
     }
 }

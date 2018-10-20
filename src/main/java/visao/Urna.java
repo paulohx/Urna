@@ -5,30 +5,71 @@
  */
 package visao;
 
+import conexao.Conexao;
+import dao.CandidatoDAO;
+import dao.PartidoDAO;
+import dao.VotoDAO;
+import dao.UrnaDAO;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import modelo.CadCandidato;
+import modelo.CadEleitor;
+import modelo.Voto;
 
 /**
  *
  * @author paulohx
  */
 public class Urna extends javax.swing.JFrame {
-
+    
+    CandidatoDAO candidatoDAO = new CandidatoDAO();
+    PartidoDAO   partidoDAO   = new PartidoDAO();
+    VotoDAO      votoDAO      = new VotoDAO();
+    UrnaDAO      urna         = new UrnaDAO();
+    
+    CadEleitor eleitor = null;
+    CadCandidato candidatoVoto = null;
+    
+    Voto votoContabilizar = null;
+    
+    CadCandidato candidatos[] = candidatoDAO.getVetorCandidato();
+    Voto voto[] = votoDAO.getVetorVoto();
+    boolean primeiroDigito;
+    
     /**
-     * Creates new form Urna
+     * Creates new form UrnaDAO
+     * @throws java.io.IOException
      */
-    public Urna() {
+    public Urna(CadEleitor eleitor, UrnaDAO urna){
         initComponents();
+        this.eleitor = eleitor;
+        this.votoContabilizar = new Voto(urna);
+        primeiroDigito = false;
         this.requestFocus();
         this.getContentPane().setBackground(new java.awt.Color(245,245,245));
         this.setLocationRelativeTo(null);
         this.setExtendedState(HIDE_ON_CLOSE);
         iniciaCores();
+    
+        try {
+            partidoDAO.baixarPartidoJson();
+        } catch (IOException ex) {
+            Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        try {
+            candidatoDAO.baixarCandidatoJson();
+        } catch (IOException ex) {
+            Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
+        }
         
     }
 
     
-    public void iniciaCores(){
+    private void iniciaCores(){
         
         this.panelIcone.setBackground(new java.awt.Color(245,245,245));
         this.setBackground(new java.awt.Color(0,0,0));
@@ -129,6 +170,9 @@ public class Urna extends javax.swing.JFrame {
         btnConfirma.setFont(new java.awt.Font("Chandas", 1, 10)); // NOI18N
         btnConfirma.setText("CONFIRMA");
         btnConfirma.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnConfirmaMouseClicked(evt);
+            }
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 btnConfirmaMouseExited(evt);
             }
@@ -155,6 +199,11 @@ public class Urna extends javax.swing.JFrame {
             }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 btnBrancoMouseEntered(evt);
+            }
+        });
+        btnBranco.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBrancoActionPerformed(evt);
             }
         });
 
@@ -184,6 +233,11 @@ public class Urna extends javax.swing.JFrame {
                 btnNum2MouseEntered(evt);
             }
         });
+        btnNum2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNum2ActionPerformed(evt);
+            }
+        });
 
         btnNum4.setFont(new java.awt.Font("Ubuntu", 1, 24)); // NOI18N
         btnNum4.setText("4");
@@ -193,6 +247,11 @@ public class Urna extends javax.swing.JFrame {
             }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 btnNum4MouseEntered(evt);
+            }
+        });
+        btnNum4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNum4ActionPerformed(evt);
             }
         });
 
@@ -206,6 +265,11 @@ public class Urna extends javax.swing.JFrame {
                 btnNum7MouseEntered(evt);
             }
         });
+        btnNum7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNum7ActionPerformed(evt);
+            }
+        });
 
         btnNum5.setFont(new java.awt.Font("Ubuntu", 1, 24)); // NOI18N
         btnNum5.setText("5");
@@ -215,6 +279,11 @@ public class Urna extends javax.swing.JFrame {
             }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 btnNum5MouseEntered(evt);
+            }
+        });
+        btnNum5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNum5ActionPerformed(evt);
             }
         });
 
@@ -228,6 +297,11 @@ public class Urna extends javax.swing.JFrame {
                 btnNum6MouseEntered(evt);
             }
         });
+        btnNum6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNum6ActionPerformed(evt);
+            }
+        });
 
         btnNum8.setFont(new java.awt.Font("Ubuntu", 1, 24)); // NOI18N
         btnNum8.setText("8");
@@ -239,6 +313,11 @@ public class Urna extends javax.swing.JFrame {
                 btnNum8MouseEntered(evt);
             }
         });
+        btnNum8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNum8ActionPerformed(evt);
+            }
+        });
 
         btnNum9.setFont(new java.awt.Font("Ubuntu", 1, 24)); // NOI18N
         btnNum9.setText("9");
@@ -248,6 +327,11 @@ public class Urna extends javax.swing.JFrame {
             }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 btnNum9MouseEntered(evt);
+            }
+        });
+        btnNum9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNum9ActionPerformed(evt);
             }
         });
 
@@ -277,6 +361,11 @@ public class Urna extends javax.swing.JFrame {
                 btnNum3MouseEntered(evt);
             }
         });
+        btnNum3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNum3ActionPerformed(evt);
+            }
+        });
 
         btnNum0.setFont(new java.awt.Font("Ubuntu", 1, 24)); // NOI18N
         btnNum0.setText("0");
@@ -286,6 +375,11 @@ public class Urna extends javax.swing.JFrame {
             }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 btnNum0MouseEntered(evt);
+            }
+        });
+        btnNum0.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNum0ActionPerformed(evt);
             }
         });
 
@@ -383,7 +477,7 @@ public class Urna extends javax.swing.JFrame {
                         .addGap(24, 24, 24))
                     .addGroup(panel2Layout.createSequentialGroup()
                         .addComponent(label2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(265, Short.MAX_VALUE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(panel2Layout.createSequentialGroup()
                         .addGroup(panel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(label3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -406,6 +500,7 @@ public class Urna extends javax.swing.JFrame {
         texSegundoDigito.setEnabled(false);
         texSegundoDigito.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
 
+        texPrimeiroDigito.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
         texPrimeiroDigito.setEditable(false);
         texPrimeiroDigito.setEnabled(false);
         texPrimeiroDigito.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
@@ -449,7 +544,7 @@ public class Urna extends javax.swing.JFrame {
                                     .addComponent(label8, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(panel3Layout.createSequentialGroup()
-                                        .addGap(29, 29, 29)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
                                         .addComponent(texPrimeiroDigito, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(texSegundoDigito, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -521,57 +616,100 @@ public class Urna extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(22, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(21, 21, 21)
                 .addComponent(panel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(24, 24, 24)
+                .addGap(25, 25, 25)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(panel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(40, 40, 40)
+                        .addGap(39, 39, 39)
                         .addComponent(panelIcone, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(73, 73, 73)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(109, 109, 109)
-                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel3)))))
-                .addGap(28, 28, 28))
+                                .addGap(36, 36, 36)
+                                .addComponent(jLabel1))
+                            .addComponent(jLabel3)))
+                    .addComponent(panel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addGap(55, 55, 55)
+                .addComponent(panel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(panelIcone, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addGap(1, 1, 1)
-                        .addComponent(jLabel3))
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(panelIcone, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(panel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(51, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(panel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(19, 19, 19))
+                        .addComponent(jLabel3)))
+                .addGap(10, 10, 10)
+                .addComponent(panel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    
+    private CadCandidato verificandoCandidato(){
+        int aux1 = Character.getNumericValue(texPrimeiroDigito.getText().charAt(2)); 
+        int aux2 = Character.getNumericValue(texSegundoDigito.getText().charAt(2)); 
+        String aux;
+        aux  = Integer.toString(aux1);
+        aux += Integer.toString(aux2);
+        
+        candidatoVoto = candidatoDAO.getCandidatoByNum(Integer.parseInt(aux));
+        if(candidatoVoto != null){
+            lblCandidatoNome.setText(candidatoVoto.getNome());
+            lblCandidatoPartido.setText(candidatoVoto.getPartido().getNome());
+            return(candidatoVoto);
+        }else{
+            lblCandidatoNome.setText("Candidato Inválido");
+            return(candidatoVoto);
+        }        
+    }
+    
+    private void controleBotoes(boolean controle){
+
+        btnNum0.setEnabled(controle);
+        btnNum1.setEnabled(controle);
+        btnNum2.setEnabled(controle);
+        btnNum3.setEnabled(controle);
+        btnNum4.setEnabled(controle);
+        btnNum5.setEnabled(controle);
+        btnNum6.setEnabled(controle);
+        btnNum7.setEnabled(controle);
+        btnNum8.setEnabled(controle);
+        btnNum9.setEnabled(controle);
+        
+    }
+    
     private void btnNum1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum1ActionPerformed
-        // TODO add your handling code here:
+        
+        if(!primeiroDigito){
+            texPrimeiroDigito.setText("  1");
+            primeiroDigito = true;
+        }else{
+            texSegundoDigito.setText("  1");
+            controleBotoes(false);
+            candidatoVoto = verificandoCandidato();
+        }
     }//GEN-LAST:event_btnNum1ActionPerformed
 
     private void btnCorrigeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCorrigeActionPerformed
-        // TODO add your handling code here:
+        controleBotoes(true);
+        texPrimeiroDigito.setText("");
+        texSegundoDigito.setText("");
+        lblCandidatoNome.setText("");
+        lblCandidatoPartido.setText("");
+        primeiroDigito = false;
     }//GEN-LAST:event_btnCorrigeActionPerformed
 
     private void btnConfirmaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConfirmaActionPerformed
-            
+        
     }//GEN-LAST:event_btnConfirmaActionPerformed
 
     private void btnConfirmaMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnConfirmaMouseEntered
@@ -681,42 +819,151 @@ public class Urna extends javax.swing.JFrame {
     private void btnConfirmaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnConfirmaKeyPressed
 //        this.dispose();
     }//GEN-LAST:event_btnConfirmaKeyPressed
-    
-    /**
-     * @param args the command line arguments
-     */
-//    public static void main(String args[]) {
-//        /* Set the Nimbus look and feel */
-//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-//         */
-//        try {
-//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-//                if ("Nimbus".equals(info.getName())) {
-//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-//                    break;
-//                }
-//            }
-//        } catch (ClassNotFoundException ex) {
-//            java.util.logging.Logger.getLogger(Urna.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (InstantiationException ex) {
-//            java.util.logging.Logger.getLogger(Urna.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (IllegalAccessException ex) {
-//            java.util.logging.Logger.getLogger(Urna.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-//            java.util.logging.Logger.getLogger(Urna.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        }
-//        //</editor-fold>
-//
-//        /* Create and display the form */
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//            public void run() {
-//                new Urna().setVisible(true);
-//            }
-//        });
-//    }
 
+    private void btnNum2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum2ActionPerformed
+        if(!primeiroDigito){
+            texPrimeiroDigito.setText("  2");
+            primeiroDigito = true;
+        }else{
+            texSegundoDigito.setText("  2");
+            controleBotoes(false);
+            candidatoVoto = verificandoCandidato();
+        }
+    }//GEN-LAST:event_btnNum2ActionPerformed
+
+    private void btnNum3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum3ActionPerformed
+        if(!primeiroDigito){
+            texPrimeiroDigito.setText("  3");
+            primeiroDigito = true;
+        }else{
+            texSegundoDigito.setText("  3");
+            controleBotoes(false);
+            candidatoVoto = verificandoCandidato();
+        }
+    }//GEN-LAST:event_btnNum3ActionPerformed
+
+    private void btnNum4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum4ActionPerformed
+        if(!primeiroDigito){
+            texPrimeiroDigito.setText("  4");
+            primeiroDigito = true;
+        }else{
+            texSegundoDigito.setText("  4");
+            controleBotoes(false);
+            candidatoVoto = verificandoCandidato();
+        }
+    }//GEN-LAST:event_btnNum4ActionPerformed
+
+    private void btnNum5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum5ActionPerformed
+        if(!primeiroDigito){
+            texPrimeiroDigito.setText("  5");
+            primeiroDigito = true;
+        }else{
+            texSegundoDigito.setText("  5");
+            controleBotoes(false);
+            candidatoVoto = verificandoCandidato();
+        }    
+    }//GEN-LAST:event_btnNum5ActionPerformed
+
+    private void btnNum6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum6ActionPerformed
+        if(!primeiroDigito){
+            texPrimeiroDigito.setText("  6");
+            primeiroDigito = true;
+        }else{
+            texSegundoDigito.setText("  6");
+            controleBotoes(false);
+            candidatoVoto = verificandoCandidato();            
+        }
+    }//GEN-LAST:event_btnNum6ActionPerformed
+
+    private void btnNum7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum7ActionPerformed
+        if(!primeiroDigito){
+            texPrimeiroDigito.setText("  7");
+            primeiroDigito = true;
+        }else{
+            texSegundoDigito.setText("  7");
+            controleBotoes(false);
+            candidatoVoto = verificandoCandidato();
+        }
+    }//GEN-LAST:event_btnNum7ActionPerformed
+
+    private void btnNum8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum8ActionPerformed
+        if(!primeiroDigito){
+            texPrimeiroDigito.setText("  8");
+            primeiroDigito = true;
+        }else{
+            texSegundoDigito.setText("  8");
+            controleBotoes(false);
+            candidatoVoto = verificandoCandidato();
+        }
+    }//GEN-LAST:event_btnNum8ActionPerformed
+
+    private void btnNum9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum9ActionPerformed
+        if(!primeiroDigito){
+            texPrimeiroDigito.setText("  9");
+            primeiroDigito = true;
+        }else{
+            texSegundoDigito.setText("  9");
+            controleBotoes(false);
+            candidatoVoto = verificandoCandidato();            
+        }
+    }//GEN-LAST:event_btnNum9ActionPerformed
+
+    private void btnNum0ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum0ActionPerformed
+        if(!primeiroDigito){
+            texPrimeiroDigito.setText("  0");
+            primeiroDigito = true;
+        }else{
+            texSegundoDigito.setText("  0");
+            controleBotoes(false);
+            candidatoVoto = verificandoCandidato();
+        }
+    }//GEN-LAST:event_btnNum0ActionPerformed
+
+    private void btnBrancoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrancoActionPerformed
+        lblCandidatoNome.setText("VOTO NULO");
+    }//GEN-LAST:event_btnBrancoActionPerformed
+
+    private void btnConfirmaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnConfirmaMouseClicked
+
+        if(candidatoVoto != null){
+            for(int i = 0; i < candidatos.length; ++i ){
+                if(candidatos[i] != null){
+                    if(candidatoVoto.getNumero() == candidatos[i].getNumero()){
+                        candidatos[i].setQtdeVoto(1);
+                        break;
+                    }
+                }
+            }
+            //Criando um arquivo para atualizar os dados do driver
+            FileWriter arq = null;
+            try {
+                arq = new FileWriter("./ArquivosJson/Candidato.json");
+                arq.close();
+            } catch (IOException ex) {
+                Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+            for(int i =0; i < candidatos.length; i++){
+                if(candidatos[i] != null){
+                    candidatoDAO.inserirJson(candidatos[i]);
+                }
+            }
+            
+            votoContabilizar.setEleitor(eleitor);
+            votoContabilizar.setCandidato(candidatoVoto);
+            
+            votoDAO.inserir(votoContabilizar);
+            votoDAO.inserirJson(votoContabilizar);
+            candidatoDAO.enviaDrive();
+            System.out.println("CANDIDATO ENVIADO");
+            votoDAO.enviaDrive();
+            System.out.println("VOTO ENVIADO");
+            this.dispose();
+        }
+        
+    }//GEN-LAST:event_btnConfirmaMouseClicked
+    
+ 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnBranco;
     private javax.swing.JButton btnConfirma;

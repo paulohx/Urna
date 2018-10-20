@@ -2,12 +2,12 @@ package dao;
 
 import dao.VotoDAO;
 
-public class Urna {
+public class UrnaDAO {
 
     private int codigo;
     private VotoDAO votoDAO = new VotoDAO();
 
-    public Urna(){
+    public UrnaDAO(){
         this.codigo = 1;
     }
     

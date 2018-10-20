@@ -1,6 +1,6 @@
 package modelo;
 
-import dao.Urna;
+import dao.UrnaDAO;
 import java.util.Date;
 
 public class Voto {
@@ -10,7 +10,7 @@ public class Voto {
     private int urna;
     private Date data;
     
-    public Voto (Urna urna){
+    public Voto (UrnaDAO urna){
         this.urna = urna.getCodigo();
         this.data = new Date(); 
     }
