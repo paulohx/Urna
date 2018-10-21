@@ -18,9 +18,18 @@ import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import modelo.CadEleitor;
 import dao.UrnaDAO;
+import java.awt.FlowLayout;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.image.ColorModel;
+import java.awt.image.MemoryImageSource;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import util.PPMFileReader;
 import util.PPMImage;
+import util.PGMImage;
 
 /**
  *
@@ -30,25 +39,25 @@ public class Login extends javax.swing.JFrame {
     
     EleitorDAO eleitorDAO = new EleitorDAO();
     UrnaDAO    urna       = new UrnaDAO(); 
-
+    CadEleitor imagem;
+    CadEleitor eleitor = new CadEleitor();
       /**
      * Creates new form Login
      */
     public Login() throws IOException {
         initComponents();
-        
-        this.getContentPane().setBackground(new java.awt.Color(245,245,245));
+        this.getContentPane().setBackground(new java.awt.Color(122,130,190));
         this.setLocationRelativeTo(null);
         this.setExtendedState(HIDE_ON_CLOSE);        
         Conexao.service();
-        
+        Login.setEnabled(false);
         eleitorDAO.baixarEleitorJson();
+        System.out.println(eleitor.getVotou());
     }
     
     
     CadEleitor eleitores[] = eleitorDAO.getVetorEleitor();
-    // UrnaDAO urna = new UrnaDAO();
-    //   urna.setVisible(true);
+
        
 
     /**
@@ -61,29 +70,22 @@ public class Login extends javax.swing.JFrame {
     private void initComponents() {
 
         panel1 = new java.awt.Panel();
-        jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        texCpfEleitor = new javax.swing.JTextField();
-        try{
-            javax.swing.text.MaskFormatter formataCpf = new javax.swing.text.MaskFormatter("###.###.###-##");
-            texCpfEleitor = new javax.swing.JFormattedTextField(formataCpf);
-        }catch(Exception e){
-
-        }
         btnLocalizarImagem = new javax.swing.JButton();
         texImagemEleitor = new javax.swing.JTextField();
-        try{
-            javax.swing.text.MaskFormatter formataCpf = new javax.swing.text.MaskFormatter("###.###.###-##");
-            texCpfEleitor = new javax.swing.JFormattedTextField(formataCpf);
-        }catch(Exception e){
-
-        }
+        jLabel1 = new javax.swing.JLabel();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel3 = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
+        lblFotoLogin = new javax.swing.JLabel();
         Login = new javax.swing.JButton();
+        btnSair = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setAlwaysOnTop(true);
+        setBackground(new java.awt.Color(1, 1, 1));
 
-        jLabel1.setFont(new java.awt.Font("Ubuntu", 1, 15)); // NOI18N
-        jLabel1.setText("CPF:");
+        panel1.setBackground(new java.awt.Color(122, 130, 190));
 
         jLabel2.setFont(new java.awt.Font("Ubuntu", 1, 15)); // NOI18N
         jLabel2.setText("IMAGEM:");
@@ -111,36 +113,87 @@ public class Login extends javax.swing.JFrame {
             }
         });
 
+        jLabel1.setFont(new java.awt.Font("Ubuntu", 1, 24)); // NOI18N
+        jLabel1.setText("    ELEIÇÕES PRESIDENCIAS 2018");
+
+        jPanel1.setBackground(new java.awt.Color(122, 130, 190));
+
+        jLabel3.setIcon(new javax.swing.ImageIcon("/home/paulohx/NetBeansProjects/Urna/src/main/resources/logotipo-miniatura.png")); // NOI18N
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap(34, Short.MAX_VALUE)
+                .addComponent(jLabel3)
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jPanel2.setBackground(new java.awt.Color(122, 130, 190));
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblFotoLogin, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblFotoLogin, javax.swing.GroupLayout.DEFAULT_SIZE, 302, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout panel1Layout = new javax.swing.GroupLayout(panel1);
         panel1.setLayout(panel1Layout);
         panel1Layout.setHorizontalGroup(
             panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panel1Layout.createSequentialGroup()
-                .addComponent(jLabel2)
-                .addGap(24, 24, 24)
-                .addComponent(btnLocalizarImagem, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(texImagemEleitor, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(33, Short.MAX_VALUE))
+                .addGap(149, 149, 149)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(panel1Layout.createSequentialGroup()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(texCpfEleitor, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(28, 28, 28))
+                .addContainerGap()
+                .addGroup(panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(panel1Layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnLocalizarImagem, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(12, 12, 12)
+                        .addComponent(texImagemEleitor)))
+                .addContainerGap())
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 417, Short.MAX_VALUE))
         );
         panel1Layout.setVerticalGroup(
             panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panel1Layout.createSequentialGroup()
-                .addGap(90, 90, 90)
-                .addGroup(panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(texCpfEleitor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(66, 66, 66)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
                 .addGroup(panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
-                    .addComponent(btnLocalizarImagem)
-                    .addComponent(texImagemEleitor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(168, Short.MAX_VALUE))
+                    .addGroup(panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(btnLocalizarImagem)
+                        .addComponent(texImagemEleitor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(18, 18, 18)
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         Login.setText("LOGIN");
@@ -155,15 +208,25 @@ public class Login extends javax.swing.JFrame {
             }
         });
 
+        btnSair.setText("SAIR");
+        btnSair.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnSairMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(Login, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(panel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(panel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(btnSair, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(Login, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -172,7 +235,9 @@ public class Login extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(panel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(Login, javax.swing.GroupLayout.DEFAULT_SIZE, 49, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(Login, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnSair))
                 .addContainerGap())
         );
 
@@ -184,7 +249,7 @@ public class Login extends javax.swing.JFrame {
     }//GEN-LAST:event_LoginKeyPressed
 
     private void LoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginActionPerformed
-        
+        this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
         boolean entrou = false;
         if(!texImagemEleitor.getText().equals("")){
             if(eleitores != null){
@@ -192,19 +257,32 @@ public class Login extends javax.swing.JFrame {
                 for(int i = 0; i < eleitores.length; i++ ){
                     if(eleitores[i] != null){
                         if(eleitores[i].getImagem().equals(ppm)&&(!eleitores[i].getVotou())){
-                            new Urna(eleitores[i], urna, eleitorDAO).setVisible(true);
+                            PGMImage PGM;
+                            PGM = eleitores[i].getImagem().convertToPGM();
+                            draw(PGM);
                             entrou = true;
+                            JOptionPane.showMessageDialog(null, "LOGIN REALIZADO COM SUCESSO!");
+                            new Urna(eleitores[i], urna, eleitorDAO).setVisible(true); 
+                            this.dispose();
                         }
                     }
                 }
             }
-        }
-        if(entrou == false){
-            JOptionPane.showMessageDialog(null, "NÃO HÁ NENHUM ELEITOR COM ESSA IMAGEM");
+        }else if(eleitor.getVotou()){
+            JOptionPane.showInternalConfirmDialog(null, "NÃO HÁ NENHUM ELEITOR COM ESSA IMAGEM,\n OU O ELEITOR JA VOTOU");
             texImagemEleitor.setText("");
         }
     }//GEN-LAST:event_LoginActionPerformed
 
+    public void draw (PGMImage imagem){
+    /*Função para gerar a imagem do eleitor assim que ele clicar em login*/    
+        JLabel imageFrame = new JLabel();   
+        MemoryImageSource source = new MemoryImageSource(imagem.getWidth(), imagem.getHeight(), ColorModel.getRGBdefault(), imagem.toRGBModel(), 0, imagem.getWidth());
+        Image img =Toolkit.getDefaultToolkit().createImage(source);
+    /*Colocando a imagem dentro*/   
+        lblFotoLogin.setIcon(new ImageIcon(img));
+        
+    }
     private void btnLocalizarImagemMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnLocalizarImagemMouseExited
         this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_btnLocalizarImagemMouseExited
@@ -218,11 +296,16 @@ public class Login extends javax.swing.JFrame {
         seleciona.showOpenDialog(null);
         File arq = seleciona.getSelectedFile();
         texImagemEleitor.setText(arq.getAbsolutePath());
+        Login.setEnabled(true);
     }//GEN-LAST:event_btnLocalizarImagemActionPerformed
 
     private void texImagemEleitorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_texImagemEleitorActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_texImagemEleitorActionPerformed
+
+    private void btnSairMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnSairMouseClicked
+        this.dispose();
+    }//GEN-LAST:event_btnSairMouseClicked
 
     /**
      * @param args the command line arguments
@@ -266,10 +349,14 @@ public class Login extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton Login;
     private javax.swing.JButton btnLocalizarImagem;
+    private javax.swing.JButton btnSair;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JLabel lblFotoLogin;
     private java.awt.Panel panel1;
-    private javax.swing.JTextField texCpfEleitor;
     private javax.swing.JTextField texImagemEleitor;
     // End of variables declaration//GEN-END:variables
 }

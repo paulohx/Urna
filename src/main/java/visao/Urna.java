@@ -49,6 +49,7 @@ public class Urna extends javax.swing.JFrame {
      * @throws java.io.IOException
      */
     public Urna(CadEleitor eleitor, UrnaDAO urna, EleitorDAO eleitorDAO){
+                
         initComponents();
         this.eleitor = eleitor;
         this.votoContabilizar = new Voto(urna);
@@ -919,12 +920,14 @@ public class Urna extends javax.swing.JFrame {
 
     private void btnBrancoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrancoActionPerformed
         lblCandidatoNome.setText("VOTO NULO");
+        lblCandidatoPartido.setText("");
+//        eleitor.setVotou(true);
+        this.dispose();
     }//GEN-LAST:event_btnBrancoActionPerformed
 
     private void btnConfirmaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnConfirmaMouseClicked
 
         this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-        
         if(candidatoVoto != null){
             for(int i = 0; i < candidatos.length; ++i ){
                 if(candidatos[i] != null){

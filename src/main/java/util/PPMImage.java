@@ -116,5 +116,23 @@ public class PPMImage {
   
         return(true);
     }
+    
+    public PGMImage convertToPGM (){
+        
+        PGMImage image= new PGMImage();
+        int []pixels= new int [redPixels.length];
+
+        for (int i = 0; i < redPixels.length; i++) {
+            pixels[i]= (int)((double)((redPixels[i]+greenPixels[i]+bluPixels[i])/3));
+        }
+        
+        image.setCoding(coding);
+        image.setType("P2");
+        image.setHeight(height);
+        image.setWidth(width);
+        image.setPixels(pixels);
+        
+        return image;
+    }
 
 }
