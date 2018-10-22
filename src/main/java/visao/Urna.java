@@ -13,6 +13,7 @@ import dao.VotoDAO;
 import dao.UrnaDAO;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -21,6 +22,9 @@ import javax.swing.JOptionPane;
 import modelo.CadCandidato;
 import modelo.CadEleitor;
 import modelo.Voto;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.AudioSystem;
 
 /**
  *
@@ -36,12 +40,11 @@ public class Urna extends javax.swing.JFrame {
     
     CadEleitor eleitor = null;
     CadCandidato candidatoVoto = null;
-    
     Voto votoContabilizar = null;
     
     CadCandidato candidatos[] = candidatoDAO.getVetorCandidato();
     Voto voto[] = votoDAO.getVetorVoto();
-    CadEleitor eleitores[]  ;//  = eleitorDAO.getVetorEleitor();
+    CadEleitor eleitores[]  ;
     boolean primeiroDigito;
     
     /**
@@ -62,11 +65,13 @@ public class Urna extends javax.swing.JFrame {
         this.setExtendedState(HIDE_ON_CLOSE);
         iniciaCores();
     
+        /* Baixando os dados dos partidos do Drive */
         try {
             partidoDAO.baixarPartidoJson();
         } catch (IOException ex) {
             Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
         }
+        /* Baixando os dados dos candidatos do Drive */
         try {
             candidatoDAO.baixarCandidatoJson();
         } catch (IOException ex) {
@@ -75,54 +80,46 @@ public class Urna extends javax.swing.JFrame {
         
     }
 
-    
+    /* Função que seta cores para vários componentes!*/
     private void iniciaCores(){
         
         this.panelIcone.setBackground(new java.awt.Color(245,245,245));
         this.setBackground(new java.awt.Color(0,0,0));
+        
         btnConfirma.setBackground(new java.awt.Color(0,100,0));
         btnConfirma.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnConfirmaActionPerformed(evt);
             }
         });
+        
         btnCorrige.setBackground(new java.awt.Color(255,140,0));
         btnCorrige.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCorrigeActionPerformed(evt);
             }
         });
-        
+        /* Colocando cores nos botões da Urna*/
         btnNum0.setForeground(Color.WHITE);
         btnNum0.setBackground(Color.BLACK);
-        
         btnNum1.setForeground(Color.WHITE);
         btnNum1.setBackground(Color.BLACK);
-        
         btnNum2.setForeground(Color.WHITE);
         btnNum2.setBackground(Color.BLACK);
-        
         btnNum3.setForeground(Color.WHITE);
         btnNum3.setBackground(Color.BLACK);
-        
         btnNum4.setForeground(Color.WHITE);
         btnNum4.setBackground(Color.BLACK);
-        
         btnNum5.setForeground(Color.WHITE);
         btnNum5.setBackground(Color.BLACK);
-        
         btnNum6.setForeground(Color.WHITE);
         btnNum6.setBackground(Color.BLACK);
-        
         btnNum7.setForeground(Color.WHITE);
         btnNum7.setBackground(Color.BLACK);
-        
         btnNum8.setForeground(Color.WHITE);
         btnNum8.setBackground(Color.BLACK);
-        
         btnNum9.setForeground(Color.WHITE);
         btnNum9.setBackground(Color.BLACK);
-        
     }
     /**
      * This method is called from within the constructor to initialize the form.
@@ -634,8 +631,26 @@ public class Urna extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
     
+    /* Função que pega o nome de um arquivo .wav e o reproduz */
+    public void playSound(String soundName)
+     {
+       try 
+       {
+        AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile( ));
+        Clip clip = AudioSystem.getClip( );
+        clip.open(audioInputStream);
+        clip.start( );
+       }
+       catch(Exception ex)
+       {
+         System.out.println("Erro para reproduzir este som!");
+         ex.printStackTrace( );
+       }
+     }
+    
+    /* Função que pega os 2 digitos que o eleitor escolheu e verifica se tem algum candidato com os mesmo*/
+    /* se ouver ele pega o nome do candidato e o nome do partido e retorna o candidato*/
     private CadCandidato verificandoCandidato(){
         int aux1 = Character.getNumericValue(texPrimeiroDigito.getText().charAt(2)); 
         int aux2 = Character.getNumericValue(texSegundoDigito.getText().charAt(2)); 
@@ -654,6 +669,7 @@ public class Urna extends javax.swing.JFrame {
         }        
     }
     
+    /* Ativar ou desativar os digitos da urna*/
     private void controleBotoes(boolean controle){
 
         btnNum0.setEnabled(controle);
@@ -668,7 +684,7 @@ public class Urna extends javax.swing.JFrame {
         btnNum9.setEnabled(controle);
         
     }
-    
+    /* Funçao que tira todos os botões, text e labels, ta tela da urna*/
     private void desabilitandoTelaUrna(){
         
             label1.setVisible(false);
@@ -687,30 +703,43 @@ public class Urna extends javax.swing.JFrame {
     }
     
     private void btnNum1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum1ActionPerformed
-        
+        /* Verificando se o primeiro digito é falso*/
         if(!primeiroDigito){
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 1 para o text do digito 1*/
             texPrimeiroDigito.setText("  1");
+            /* Setando true para a variavel de controle*/
             primeiroDigito = true;
-        }else{
+        }else{/* Se não*/
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 1 para o text do digito 2*/
             texSegundoDigito.setText("  1");
+            /* Chamando funçaõ para setar false no enable dos botẽs*/
             controleBotoes(false);
+            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
             candidatoVoto = verificandoCandidato();
         }
     }//GEN-LAST:event_btnNum1ActionPerformed
 
     private void btnCorrigeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCorrigeActionPerformed
+        /* Chamando funçaõ para setar true no enable dos botẽs*/
         controleBotoes(true);
+        /* Limpando os text e os labels para o eleitor poder corrigir seu voto*/
         texPrimeiroDigito.setText("");
         texSegundoDigito.setText("");
         lblCandidatoNome.setText("");
         lblCandidatoPartido.setText("");
+        /* Setando falso para a variavel de controle primeiro digito */
         primeiroDigito = false;
     }//GEN-LAST:event_btnCorrigeActionPerformed
 
     private void btnConfirmaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConfirmaActionPerformed
         
     }//GEN-LAST:event_btnConfirmaActionPerformed
-
+    /* Arrumando o cursor do mouse para sempre que ele passar em cima de um botão*/
+    /* ele mudar o cursor para uma mãozinha e sempre que sair do botão voltar para o padrão*/
     private void btnConfirmaMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnConfirmaMouseEntered
         this.setCursor(new Cursor(Cursor.HAND_CURSOR));
     }//GEN-LAST:event_btnConfirmaMouseEntered
@@ -816,109 +845,194 @@ public class Urna extends javax.swing.JFrame {
     }//GEN-LAST:event_btnNum6MouseExited
 
     private void btnConfirmaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnConfirmaKeyPressed
-//        this.dispose();
+
     }//GEN-LAST:event_btnConfirmaKeyPressed
 
     private void btnNum2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum2ActionPerformed
-        if(!primeiroDigito){
+        /* Verificando se o primeiro digito é falso*/
+        if(!primeiroDigito){             
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 2 para o text do digito 1*/
             texPrimeiroDigito.setText("  2");
+            /* Setando true para a variavel de controle*/
             primeiroDigito = true;
         }else{
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 2 para o text do digito 2*/
             texSegundoDigito.setText("  2");
+            /* Chamando funçaõ para setar false no enable dos botẽs*/
             controleBotoes(false);
+            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
             candidatoVoto = verificandoCandidato();
         }
     }//GEN-LAST:event_btnNum2ActionPerformed
 
     private void btnNum3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum3ActionPerformed
+        /* Verificando se o primeiro digito é falso*/
         if(!primeiroDigito){
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 3 para o text do digito 1*/
             texPrimeiroDigito.setText("  3");
+            /* Setando true para a variavel de controle*/
             primeiroDigito = true;
         }else{
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 3 para o text do digito 2*/
             texSegundoDigito.setText("  3");
+            /* Chamando funçaõ para setar false no enable dos botẽs*/
             controleBotoes(false);
+            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
             candidatoVoto = verificandoCandidato();
         }
     }//GEN-LAST:event_btnNum3ActionPerformed
 
     private void btnNum4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum4ActionPerformed
         if(!primeiroDigito){
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 4 para o text do digito 1*/
             texPrimeiroDigito.setText("  4");
             primeiroDigito = true;
         }else{
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 4 para o text do digito 2*/
             texSegundoDigito.setText("  4");
+            /* Chamando funçaõ para setar false no enable dos botẽs*/
             controleBotoes(false);
+            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
             candidatoVoto = verificandoCandidato();
         }
     }//GEN-LAST:event_btnNum4ActionPerformed
 
     private void btnNum5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum5ActionPerformed
         if(!primeiroDigito){
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 5 para o text do digito 1*/
             texPrimeiroDigito.setText("  5");
+            /* Setando true para a variavel de controle*/
             primeiroDigito = true;
         }else{
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 5 para o text do digito 2*/
             texSegundoDigito.setText("  5");
+            /* Chamando funçaõ para setar false no enable dos botẽs*/
             controleBotoes(false);
+            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
             candidatoVoto = verificandoCandidato();
         }    
     }//GEN-LAST:event_btnNum5ActionPerformed
 
     private void btnNum6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum6ActionPerformed
         if(!primeiroDigito){
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 6 para o text do digito 1*/
             texPrimeiroDigito.setText("  6");
+            /* Setando true para a variavel de controle*/
             primeiroDigito = true;
         }else{
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 6 para o text do digito 2*/
             texSegundoDigito.setText("  6");
+            /* Chamando funçaõ para setar false no enable dos botẽs*/
             controleBotoes(false);
+            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
             candidatoVoto = verificandoCandidato();            
         }
     }//GEN-LAST:event_btnNum6ActionPerformed
 
     private void btnNum7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum7ActionPerformed
         if(!primeiroDigito){
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 7 para o text do digito 1*/
             texPrimeiroDigito.setText("  7");
+            /* Setando true para a variavel de controle*/            
             primeiroDigito = true;
         }else{
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 7 para o text do digito 2*/
             texSegundoDigito.setText("  7");
+            /* Chamando funçaõ para setar false no enable dos botẽs*/
             controleBotoes(false);
+            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
             candidatoVoto = verificandoCandidato();
         }
     }//GEN-LAST:event_btnNum7ActionPerformed
 
     private void btnNum8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum8ActionPerformed
         if(!primeiroDigito){
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 8 para o text do digito 1*/
             texPrimeiroDigito.setText("  8");
+            /* Setando true para a variavel de controle*/
             primeiroDigito = true;
         }else{
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 8 para o text do digito 2*/
             texSegundoDigito.setText("  8");
+            /* Chamando funçaõ para setar false no enable dos botẽs*/
             controleBotoes(false);
+            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
             candidatoVoto = verificandoCandidato();
         }
     }//GEN-LAST:event_btnNum8ActionPerformed
 
     private void btnNum9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum9ActionPerformed
         if(!primeiroDigito){
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 9 para o text do digito 1*/
             texPrimeiroDigito.setText("  9");
+            /* Setando true para a variavel de controle*/
             primeiroDigito = true;
         }else{
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 9 para o text do digito 2*/
             texSegundoDigito.setText("  9");
+            /* Chamando funçaõ para setar false no enable dos botẽs*/
             controleBotoes(false);
+            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
             candidatoVoto = verificandoCandidato();            
         }
     }//GEN-LAST:event_btnNum9ActionPerformed
 
     private void btnNum0ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum0ActionPerformed
         if(!primeiroDigito){
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 0 para o text do digito 1*/
             texPrimeiroDigito.setText("  0");
+            /* Setando true para a variavel de controle*/
             primeiroDigito = true;
         }else{
+            /* Som do Digito da urna*/
+            playSound("urnaDigito.wav");
+            /* Setando 0 para o text do digito 2*/
             texSegundoDigito.setText("  0");
+            /* Chamando funçaõ para setar false no enable dos botẽs*/
             controleBotoes(false);
+            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
             candidatoVoto = verificandoCandidato();
         }
     }//GEN-LAST:event_btnNum0ActionPerformed
 
     private void btnBrancoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrancoActionPerformed
+        
+        /* FALTA ARRUMAR O VOTO EM BRANCO*/
+        
         lblCandidatoNome.setText("VOTO NULO");
         lblCandidatoPartido.setText("");
 //        eleitor.setVotou(true);
@@ -926,62 +1040,86 @@ public class Urna extends javax.swing.JFrame {
     }//GEN-LAST:event_btnBrancoActionPerformed
 
     private void btnConfirmaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnConfirmaMouseClicked
-
+        /* Mudando o cursor para não clicar em nada na tela*/
         this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+        /* Vericando se o Candidato não é null*/
         if(candidatoVoto != null){
+            /* Percorrendo o vetor de candidatos*/
             for(int i = 0; i < candidatos.length; ++i ){
+                /* Verificando se determinada posição do vetor de candidatos é null*/
                 if(candidatos[i] != null){
+                    /* Comparando se o numero digitado na urna é igual a de algum candidato*/
                     if(candidatoVoto.getNumero() == candidatos[i].getNumero()){
+                        /* Acrescentando um voto para o candidato escolhido*/
                         candidatos[i].setQtdeVoto(1);
+                        /* Colocando true para o eleitor que acabou de votar!*/
                         eleitor.setVotou(true);
+                        /* Saindo do laço*/
                         break;
                     }
                 }
             }
             
-            //Criando um arquivo para atualizar os dados do driver
+            /* Criando uma variavel do tipo FileWriter*/
             FileWriter arq = null;
             try {
+                /* Criando um arquivo Json sem nada dentro*/
                 arq = new FileWriter("./ArquivosJson/Candidato.json");
+                /* Fechando o arquivo*/
                 arq.close();
             } catch (IOException ex) {
                 Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
+            /* Colocando null na variavel arq*/
             arq = null;
             try {
+                /* Criando um arquivo Json sem nada dentro*/
                 arq = new FileWriter("./ArquivosJson/Eleitor.json");
+                /* Fechando o arquivo*/
                 arq.close();
             } catch (IOException ex) {
                 Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
             }
             
-            
+            /* Laço do tamanho do vetor de candidatos*/
             for(int i =0; i < candidatos.length; i++){
+                /* Verificando se determinada posição do vetor de candidatos é null*/
                 if(candidatos[i] != null){
+                    /* Inserindo no arquivo Json, os dados atualizados dos  votos do candidatos*/
                     candidatoDAO.inserirJson(candidatos[i]);
                 }
             }
             
+            /* Laço do tamanho do vetor de eleitores*/
             for(int i =0; i < eleitores.length; i++){
+                /* Verificando se determinada posição do vetor de eleitores é null*/
                 if(eleitores[i] != null){
+                    /* Inserindo no arquivo Json, os dados atualizados do eleitor em relação aos votos*/
                     eleitorDAO.inserirJson(eleitores[i]);
                 }
             }
-            
+            /* Som do Confirma da Urna*/
+            playSound("urnaConfirma.wav");
+            /* Desabilitando a tela da urna*/
             desabilitandoTelaUrna();
             
+            /* Guardando o CPF do eleitor para contabilizar os votos*/
             votoContabilizar.setCpfEleitor(eleitor.getCpf());
+            /* Guarando o candidato que o eleitor votou*/
             votoContabilizar.setCandidato(candidatoVoto);
-            
+            /* Colocando o voto no vetor de votos*/
             votoDAO.inserir(votoContabilizar);
+            /* Colocando o voto no arquivo JSON*/
             votoDAO.inserirJson(votoContabilizar);
             
-            
+            /* Enviando o vetor de eleitores para o Drive*/
             eleitorDAO.enviaDrive();
+            /* Enviando o vetor de candidatos para o Drive*/
             candidatoDAO.enviaDrive();
+            /* Enviando o vetor de votos para o Drive*/
             votoDAO.enviaDrive();
             
+            /* Fechando a urna*/
             this.dispose();
         }
         

@@ -256,22 +256,32 @@ public class Login extends javax.swing.JFrame {
                 PPMImage ppm = PPMFileReader.readImage(texImagemEleitor.getText());
                 for(int i = 0; i < eleitores.length; i++ ){
                     if(eleitores[i] != null){
+                        /* Comparando se a imagem do eleitor em uma determinada posição*/
+                        /* é igual a imagem selecionada e se o eleitor ainda não votou*/
                         if(eleitores[i].getImagem().equals(ppm)&&(!eleitores[i].getVotou())){
+                            /* Criando uma variavel PGM do tipo PGMImage*/
                             PGMImage PGM;
+                            /* Atribuindo para a variavel PGM, a imagem convertida para PGM do eleitor*/
                             PGM = eleitores[i].getImagem().convertToPGM();
+                            /* Desenhando a imagem na tela*/
                             draw(PGM);
+                            /* Atribuindo true para a variavel entrou*/
                             entrou = true;
-                            JOptionPane.showMessageDialog(null, "LOGIN REALIZADO COM SUCESSO!");
-                            new Urna(eleitores[i], urna, eleitorDAO).setVisible(true); 
+                            /* Mensagem informando ao usuario que o login foi efetuado com sucesso*/
+                            JOptionPane.showMessageDialog(null, "LOGIN EFETUADO COM SUCESSO!");
+                            /* Instânciando a urna, passando os parametros e colocando ela visivel*/
+                            new Urna(eleitores[i], urna, eleitorDAO).setVisible(true);
+                            /* Fechando a tela de login*/
                             this.dispose();
                         }
                     }
                 }
             }
-        }else if(eleitor.getVotou()){
-            JOptionPane.showInternalConfirmDialog(null, "NÃO HÁ NENHUM ELEITOR COM ESSA IMAGEM,\n OU O ELEITOR JA VOTOU");
-            texImagemEleitor.setText("");
         }
+//        else if(eleitor.getVotou()){
+//            JOptionPane.showInternalConfirmDialog(null, "NÃO HÁ NENHUM ELEITOR COM ESSA IMAGEM,\n OU O ELEITOR JA VOTOU");
+//            texImagemEleitor.setText("");
+//        }
     }//GEN-LAST:event_LoginActionPerformed
 
     public void draw (PGMImage imagem){
@@ -279,7 +289,7 @@ public class Login extends javax.swing.JFrame {
         JLabel imageFrame = new JLabel();   
         MemoryImageSource source = new MemoryImageSource(imagem.getWidth(), imagem.getHeight(), ColorModel.getRGBdefault(), imagem.toRGBModel(), 0, imagem.getWidth());
         Image img =Toolkit.getDefaultToolkit().createImage(source);
-    /*Colocando a imagem dentro*/   
+    /*Colocando a imagem dentro de um label*/   
         lblFotoLogin.setIcon(new ImageIcon(img));
         
     }
@@ -292,10 +302,15 @@ public class Login extends javax.swing.JFrame {
     }//GEN-LAST:event_btnLocalizarImagemMouseEntered
 
     private void btnLocalizarImagemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLocalizarImagemActionPerformed
+        /* Criando um seletor de arquivos*/
         JFileChooser seleciona = new JFileChooser();
+        /* Abrindo ele*/
         seleciona.showOpenDialog(null);
+        /* Colocando dentro da variavel arq do tipo FILE, a imagem selecionada*/
         File arq = seleciona.getSelectedFile();
+        /* Colocando no text o endereço da imagem selecionada*/
         texImagemEleitor.setText(arq.getAbsolutePath());
+        /* Ativando o botão de login*/
         Login.setEnabled(true);
     }//GEN-LAST:event_btnLocalizarImagemActionPerformed
 
