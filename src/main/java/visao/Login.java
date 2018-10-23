@@ -1,15 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package visao;
 
 import conexao.Conexao;
-import dao.CandidatoDAO;
 import dao.EleitorDAO;
-import dao.PartidoDAO;
-import dao.VotoDAO;
 import java.awt.Cursor;
 import java.io.File;
 import java.io.IOException;
@@ -18,41 +10,32 @@ import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import modelo.CadEleitor;
 import dao.UrnaDAO;
-import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.ColorModel;
 import java.awt.image.MemoryImageSource;
 import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import util.PPMFileReader;
 import util.PPMImage;
 import util.PGMImage;
 
-/**
- *
- * @author paulohx
- */
 public class Login extends javax.swing.JFrame {
     
     EleitorDAO eleitorDAO = new EleitorDAO();
-    UrnaDAO    urna       = new UrnaDAO(); 
-    CadEleitor imagem;
-    CadEleitor eleitor = new CadEleitor();
-      /**
-     * Creates new form Login
-     */
+    UrnaDAO    urna       = new UrnaDAO();     
+    CadEleitor eleitor    = new CadEleitor();
+
     public Login() throws IOException {
+        
         initComponents();
+        this.setTitle("Tela de login");
         this.getContentPane().setBackground(new java.awt.Color(122,130,190));
         this.setLocationRelativeTo(null);
-        this.setExtendedState(HIDE_ON_CLOSE);        
+        this.setExtendedState(HIDE_ON_CLOSE);
         Conexao.service();
         Login.setEnabled(false);
         eleitorDAO.baixarEleitorJson();
-        System.out.println(eleitor.getVotou());
     }
     
     
@@ -82,8 +65,8 @@ public class Login extends javax.swing.JFrame {
         btnSair = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setAlwaysOnTop(true);
         setBackground(new java.awt.Color(1, 1, 1));
+        setUndecorated(true);
 
         panel1.setBackground(new java.awt.Color(122, 130, 190));
 
@@ -107,18 +90,11 @@ public class Login extends javax.swing.JFrame {
         });
 
         texImagemEleitor.setEnabled(false);
-        texImagemEleitor.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                texImagemEleitorActionPerformed(evt);
-            }
-        });
 
         jLabel1.setFont(new java.awt.Font("Ubuntu", 1, 24)); // NOI18N
         jLabel1.setText("    ELEIÇÕES PRESIDENCIAS 2018");
 
         jPanel1.setBackground(new java.awt.Color(122, 130, 190));
-
-        jLabel3.setIcon(new javax.swing.ImageIcon("/home/paulohx/NetBeansProjects/Urna/src/main/resources/logotipo-miniatura.png")); // NOI18N
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -186,25 +162,28 @@ public class Login extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(48, 48, 48)
-                .addGroup(panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
+                .addGroup(panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(btnLocalizarImagem)
-                        .addComponent(texImagemEleitor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(texImagemEleitor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel2))
                 .addGap(18, 18, 18)
                 .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         Login.setText("LOGIN");
+        Login.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                LoginMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                LoginMouseEntered(evt);
+            }
+        });
         Login.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 LoginActionPerformed(evt);
-            }
-        });
-        Login.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                LoginKeyPressed(evt);
             }
         });
 
@@ -212,6 +191,12 @@ public class Login extends javax.swing.JFrame {
         btnSair.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 btnSairMouseClicked(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btnSairMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btnSairMouseEntered(evt);
             }
         });
 
@@ -244,54 +229,82 @@ public class Login extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void LoginKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_LoginKeyPressed
-
-    }//GEN-LAST:event_LoginKeyPressed
-
     private void LoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginActionPerformed
+        
+        /*Muda o cursor*/
         this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-        boolean entrou = false;
+        
+        boolean imagemIgual = false;
+        
+        /*Verifica se a url da imagem esta vazia*/
         if(!texImagemEleitor.getText().equals("")){
-            if(eleitores != null){
-                PPMImage ppm = PPMFileReader.readImage(texImagemEleitor.getText());
-                for(int i = 0; i < eleitores.length; i++ ){
-                    if(eleitores[i] != null){
-                        /* Comparando se a imagem do eleitor em uma determinada posição*/
-                        /* é igual a imagem selecionada e se o eleitor ainda não votou*/
-                        if(eleitores[i].getImagem().equals(ppm)&&(!eleitores[i].getVotou())){
-                            /* Criando uma variavel PGM do tipo PGMImage*/
-                            PGMImage PGM;
-                            /* Atribuindo para a variavel PGM, a imagem convertida para PGM do eleitor*/
-                            PGM = eleitores[i].getImagem().convertToPGM();
-                            /* Desenhando a imagem na tela*/
-                            draw(PGM);
-                            /* Atribuindo true para a variavel entrou*/
-                            entrou = true;
-                            /* Mensagem informando ao usuario que o login foi efetuado com sucesso*/
-                            JOptionPane.showMessageDialog(null, "LOGIN EFETUADO COM SUCESSO!");
+            
+            /*Transforma a imagem seleciona em objeto*/
+            PPMImage PPM = PPMFileReader.readImage(texImagemEleitor.getText());
+            
+            /* Criando uma variavel PGM do tipo PGMImage*/
+            PGMImage PGM;
+
+            /* Atribuindo para a variavel PGM, a imagem convertida para PGM do eleitor*/
+            PGM = PPM.convertToPGM();
+
+            /* Desenhando a imagem na tela*/
+            draw(PGM);
+            
+            for(int i = 0; i < eleitores.length; i++ ){
+
+                if(eleitores[i] != null){
+                    
+                    /* Comparando se a imagem selecionada e igual ao de algum eleitor*/                    
+                    if(eleitores[i].getImagem().equals(PPM)){
+                                                
+                        /*Entrou no if quer dizer que a imagem e igual*/
+                        imagemIgual = true;
+                        
+                        /* Se este eleitor ja votou (caso votou nao deixa ele entrar)*/
+                        if (eleitores[i].getVotou()){
+                            
+                            JOptionPane.showMessageDialog(this, eleitores[i].getNome() + " você não pode votar denovo", "Erro", JOptionPane.ERROR_MESSAGE);
+                            break;
+                            
+                        }else{
+                            
+                            /*Chegou aqui e porque a imagem esta certa E ele ainda nao votou*/                            
+                            JOptionPane.showMessageDialog(this, "Login efetuado com sucesso!");
+                            
                             /* Instânciando a urna, passando os parametros e colocando ela visivel*/
                             new Urna(eleitores[i], urna, eleitorDAO).setVisible(true);
+                            
                             /* Fechando a tela de login*/
                             this.dispose();
                         }
                     }
                 }
             }
+            
+            if (!imagemIgual){
+                
+                /*volta o cursor para o normal*/
+                this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                
+                JOptionPane.showMessageDialog(this, "Não há nenhum eleitor cadastrado com essa imagem", "Erro", JOptionPane.ERROR_MESSAGE);
+                
+                texImagemEleitor.setText("");
+            }
         }
-//        else if(eleitor.getVotou()){
-//            JOptionPane.showInternalConfirmDialog(null, "NÃO HÁ NENHUM ELEITOR COM ESSA IMAGEM,\n OU O ELEITOR JA VOTOU");
-//            texImagemEleitor.setText("");
-//        }
+
+        /*volta o cursor para o normal*/
+        this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_LoginActionPerformed
 
     public void draw (PGMImage imagem){
-    /*Função para gerar a imagem do eleitor assim que ele clicar em login*/    
-        JLabel imageFrame = new JLabel();   
+        
+        /*Funcao para gerar a imagem do eleitor assim que ele clicar em login*/
         MemoryImageSource source = new MemoryImageSource(imagem.getWidth(), imagem.getHeight(), ColorModel.getRGBdefault(), imagem.toRGBModel(), 0, imagem.getWidth());
         Image img =Toolkit.getDefaultToolkit().createImage(source);
-    /*Colocando a imagem dentro de um label*/   
-        lblFotoLogin.setIcon(new ImageIcon(img));
         
+        /*Colocando a imagem dentro de um label*/   
+        lblFotoLogin.setIcon(new ImageIcon(img));        
     }
     private void btnLocalizarImagemMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnLocalizarImagemMouseExited
         this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
@@ -302,29 +315,56 @@ public class Login extends javax.swing.JFrame {
     }//GEN-LAST:event_btnLocalizarImagemMouseEntered
 
     private void btnLocalizarImagemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLocalizarImagemActionPerformed
+        
         /* Criando um seletor de arquivos*/
         JFileChooser seleciona = new JFileChooser();
-        /* Abrindo ele*/
-        seleciona.showOpenDialog(null);
-        /* Colocando dentro da variavel arq do tipo FILE, a imagem selecionada*/
-        File arq = seleciona.getSelectedFile();
-        /* Colocando no text o endereço da imagem selecionada*/
-        texImagemEleitor.setText(arq.getAbsolutePath());
-        /* Ativando o botão de login*/
-        Login.setEnabled(true);
-    }//GEN-LAST:event_btnLocalizarImagemActionPerformed
+        
+        /*Verifica se o usuario clicou no Abrir*/
+        if (seleciona.showOpenDialog(null) == JFileChooser.APPROVE_OPTION){
 
-    private void texImagemEleitorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_texImagemEleitorActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_texImagemEleitorActionPerformed
+            /* Colocando dentro da variavel arq do tipo FILE, a imagem selecionada*/
+            if (seleciona.getSelectedFile().getAbsolutePath().matches(".+\\.ppm")){
+             
+                /*Pega o caminho do arquivo*/
+                String caminho = seleciona.getSelectedFile().getAbsolutePath();
+            
+                /*Verifica se o caminho nao esta vindo vazio*/
+                if (!caminho.equals("")){
+
+                    /* Colocando no text o endereco da imagem selecionada*/
+                    texImagemEleitor.setText(caminho);
+                }
+
+                /* Ativando o botao de login*/
+                Login.setEnabled(true);
+                
+            }else{
+                /*Selecionou um arquivo que nao tem extensao .ppm*/
+                JOptionPane.showMessageDialog(this, "Você só pode selecionar arquivos .ppm", "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_btnLocalizarImagemActionPerformed
 
     private void btnSairMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnSairMouseClicked
         this.dispose();
     }//GEN-LAST:event_btnSairMouseClicked
 
-    /**
-     * @param args the command line arguments
-     */
+    private void btnSairMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnSairMouseEntered
+        this.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }//GEN-LAST:event_btnSairMouseEntered
+
+    private void LoginMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_LoginMouseEntered
+        this.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }//GEN-LAST:event_LoginMouseEntered
+
+    private void LoginMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_LoginMouseExited
+        this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_LoginMouseExited
+
+    private void btnSairMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnSairMouseExited
+        this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_btnSairMouseExited
+
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">

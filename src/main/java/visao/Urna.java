@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package visao;
 
-import conexao.Conexao;
 import dao.CandidatoDAO;
 import dao.EleitorDAO;
 import dao.PartidoDAO;
@@ -18,7 +12,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JOptionPane;
 import modelo.CadCandidato;
 import modelo.CadEleitor;
 import modelo.Voto;
@@ -26,10 +19,6 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.AudioSystem;
 
-/**
- *
- * @author paulohx
- */
 public class Urna extends javax.swing.JFrame {
     
     CandidatoDAO candidatoDAO = new CandidatoDAO();
@@ -46,6 +35,7 @@ public class Urna extends javax.swing.JFrame {
     Voto voto[] = votoDAO.getVetorVoto();
     CadEleitor eleitores[]  ;
     boolean primeiroDigito;
+    boolean votoBranco = false;
     
     /**
      * Creates new form UrnaDAO
@@ -60,6 +50,7 @@ public class Urna extends javax.swing.JFrame {
         this.eleitores = this.eleitorDAO.getVetorEleitor();
         primeiroDigito = false;
         this.requestFocus();
+        this.setTitle("Urna eletrônica");
         this.getContentPane().setBackground(new java.awt.Color(245,245,245));
         this.setLocationRelativeTo(null);
         this.setExtendedState(HIDE_ON_CLOSE);
@@ -80,18 +71,13 @@ public class Urna extends javax.swing.JFrame {
         
     }
 
-    /* Função que seta cores para vários componentes!*/
+    /* Função que seta cores para vários componentes*/
     private void iniciaCores(){
         
         this.panelIcone.setBackground(new java.awt.Color(245,245,245));
         this.setBackground(new java.awt.Color(0,0,0));
         
         btnConfirma.setBackground(new java.awt.Color(0,100,0));
-        btnConfirma.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnConfirmaActionPerformed(evt);
-            }
-        });
         
         btnCorrige.setBackground(new java.awt.Color(255,140,0));
         btnCorrige.addActionListener(new java.awt.event.ActionListener() {
@@ -99,6 +85,7 @@ public class Urna extends javax.swing.JFrame {
                 btnCorrigeActionPerformed(evt);
             }
         });
+        
         /* Colocando cores nos botões da Urna*/
         btnNum0.setForeground(Color.WHITE);
         btnNum0.setBackground(Color.BLACK);
@@ -175,9 +162,6 @@ public class Urna extends javax.swing.JFrame {
         btnConfirma.setFont(new java.awt.Font("Chandas", 1, 10)); // NOI18N
         btnConfirma.setText("CONFIRMA");
         btnConfirma.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                btnConfirmaMouseClicked(evt);
-            }
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 btnConfirmaMouseExited(evt);
             }
@@ -188,11 +172,6 @@ public class Urna extends javax.swing.JFrame {
         btnConfirma.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnConfirmaActionPerformed(evt);
-            }
-        });
-        btnConfirma.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                btnConfirmaKeyPressed(evt);
             }
         });
 
@@ -609,8 +588,6 @@ public class Urna extends javax.swing.JFrame {
 
         panelIcone.setBackground(new java.awt.Color(254, 254, 254));
 
-        jLabel2.setIcon(new javax.swing.ImageIcon("/home/paulohx/NetBeansProjects/Urna/src/main/resources/logotipo-miniatura.png")); // NOI18N
-
         javax.swing.GroupLayout panelIconeLayout = new javax.swing.GroupLayout(panelIcone);
         panelIcone.setLayout(panelIconeLayout);
         panelIconeLayout.setHorizontalGroup(
@@ -627,7 +604,7 @@ public class Urna extends javax.swing.JFrame {
         );
 
         getContentPane().add(panelIcone);
-        panelIcone.setBounds(595, 10, 81, 53);
+        panelIcone.setBounds(595, 10, 24, 0);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -664,7 +641,7 @@ public class Urna extends javax.swing.JFrame {
             lblCandidatoPartido.setText(candidatoVoto.getPartido().getNome());
             return(candidatoVoto);
         }else{
-            lblCandidatoNome.setText("Candidato Inválido");
+            lblCandidatoNome.setText("VOTO NULO");
             return(candidatoVoto);
         }        
     }
@@ -687,19 +664,19 @@ public class Urna extends javax.swing.JFrame {
     /* Funçao que tira todos os botões, text e labels, ta tela da urna*/
     private void desabilitandoTelaUrna(){
         
-            label1.setVisible(false);
-            label2.setVisible(false);
-            label3.setVisible(false);
-            label4.setVisible(false);
-            label5.setVisible(false);
-            label6.setVisible(false);
-            label7.setVisible(false);
-            label8.setVisible(false);
-            label9.setVisible(false);
-            texPrimeiroDigito.setVisible(false);
-            texSegundoDigito.setVisible(false);
-            lblCandidatoNome.setVisible(false);
-            lblCandidatoPartido.setVisible(false);
+        label1.setVisible(false);
+        label2.setVisible(false);
+        label3.setVisible(false);
+        label4.setVisible(false);
+        label5.setVisible(false);
+        label6.setVisible(false);
+        label7.setVisible(false);
+        label8.setVisible(false);
+        label9.setVisible(false);
+        texPrimeiroDigito.setVisible(false);
+        texSegundoDigito.setVisible(false);
+        lblCandidatoNome.setVisible(false);
+        lblCandidatoPartido.setVisible(false);
     }
     
     private void btnNum1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum1ActionPerformed
@@ -734,10 +711,6 @@ public class Urna extends javax.swing.JFrame {
         /* Setando falso para a variavel de controle primeiro digito */
         primeiroDigito = false;
     }//GEN-LAST:event_btnCorrigeActionPerformed
-
-    private void btnConfirmaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConfirmaActionPerformed
-        
-    }//GEN-LAST:event_btnConfirmaActionPerformed
     /* Arrumando o cursor do mouse para sempre que ele passar em cima de um botão*/
     /* ele mudar o cursor para uma mãozinha e sempre que sair do botão voltar para o padrão*/
     private void btnConfirmaMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnConfirmaMouseEntered
@@ -843,10 +816,6 @@ public class Urna extends javax.swing.JFrame {
     private void btnNum6MouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnNum6MouseExited
         this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_btnNum6MouseExited
-
-    private void btnConfirmaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnConfirmaKeyPressed
-
-    }//GEN-LAST:event_btnConfirmaKeyPressed
 
     private void btnNum2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum2ActionPerformed
         /* Verificando se o primeiro digito é falso*/
@@ -1031,99 +1000,126 @@ public class Urna extends javax.swing.JFrame {
 
     private void btnBrancoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrancoActionPerformed
         
-        /* FALTA ARRUMAR O VOTO EM BRANCO*/
-        
-        lblCandidatoNome.setText("VOTO NULO");
+        lblCandidatoNome.setText("VOTO EM BRANCO");
         lblCandidatoPartido.setText("");
-//        eleitor.setVotou(true);
-        this.dispose();
+        votoBranco = true;        
+        btnConfirmaActionPerformed(evt);
     }//GEN-LAST:event_btnBrancoActionPerformed
 
-    private void btnConfirmaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnConfirmaMouseClicked
+    private void btnConfirmaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConfirmaActionPerformed
+        
+        /*
+          Voto nulo e voto em branco sao tratados do mesmo jeito neste software, ou seja
+          jogando nulo no candidato.
+        */
+        
         /* Mudando o cursor para não clicar em nada na tela*/
         this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-        /* Vericando se o Candidato não é null*/
-        if(candidatoVoto != null){
+        
+        /*Evita pressionar confirmar sem antes ter preenchido os campos e se nao estiver pressionado voto em branco*/
+        if (texSegundoDigito.getText().equals("") && !votoBranco){
+            
+            /*Volta o cursor como estava*/
+            this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            
+            return ;
+        }
+        
+        /*Se esse objeto estiver nulo e porque o usuario quer votar branco ou nulo*/
+        if (candidatoVoto != null){
+            
             /* Percorrendo o vetor de candidatos*/
             for(int i = 0; i < candidatos.length; ++i ){
-                /* Verificando se determinada posição do vetor de candidatos é null*/
+
+                /*Evita o erro de Null pointer exception*/
                 if(candidatos[i] != null){
-                    /* Comparando se o numero digitado na urna é igual a de algum candidato*/
+
+                    /* Comparando se o numero digitado na urna e igual a de algum candidato*/                    
                     if(candidatoVoto.getNumero() == candidatos[i].getNumero()){
+
                         /* Acrescentando um voto para o candidato escolhido*/
                         candidatos[i].setQtdeVoto(1);
-                        /* Colocando true para o eleitor que acabou de votar!*/
-                        eleitor.setVotou(true);
-                        /* Saindo do laço*/
+
                         break;
                     }
                 }
             }
-            
-            /* Criando uma variavel do tipo FileWriter*/
-            FileWriter arq = null;
-            try {
-                /* Criando um arquivo Json sem nada dentro*/
-                arq = new FileWriter("./ArquivosJson/Candidato.json");
-                /* Fechando o arquivo*/
-                arq.close();
-            } catch (IOException ex) {
-                Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            /* Colocando null na variavel arq*/
-            arq = null;
-            try {
-                /* Criando um arquivo Json sem nada dentro*/
-                arq = new FileWriter("./ArquivosJson/Eleitor.json");
-                /* Fechando o arquivo*/
-                arq.close();
-            } catch (IOException ex) {
-                Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            
-            /* Laço do tamanho do vetor de candidatos*/
-            for(int i =0; i < candidatos.length; i++){
-                /* Verificando se determinada posição do vetor de candidatos é null*/
-                if(candidatos[i] != null){
-                    /* Inserindo no arquivo Json, os dados atualizados dos  votos do candidatos*/
-                    candidatoDAO.inserirJson(candidatos[i]);
-                }
-            }
-            
-            /* Laço do tamanho do vetor de eleitores*/
-            for(int i =0; i < eleitores.length; i++){
-                /* Verificando se determinada posição do vetor de eleitores é null*/
-                if(eleitores[i] != null){
-                    /* Inserindo no arquivo Json, os dados atualizados do eleitor em relação aos votos*/
-                    eleitorDAO.inserirJson(eleitores[i]);
-                }
-            }
-            /* Som do Confirma da Urna*/
-            playSound("urnaConfirma.wav");
-            /* Desabilitando a tela da urna*/
-            desabilitandoTelaUrna();
-            
-            /* Guardando o CPF do eleitor para contabilizar os votos*/
-            votoContabilizar.setCpfEleitor(eleitor.getCpf());
-            /* Guarando o candidato que o eleitor votou*/
-            votoContabilizar.setCandidato(candidatoVoto);
-            /* Colocando o voto no vetor de votos*/
-            votoDAO.inserir(votoContabilizar);
-            /* Colocando o voto no arquivo JSON*/
-            votoDAO.inserirJson(votoContabilizar);
-            
-            /* Enviando o vetor de eleitores para o Drive*/
-            eleitorDAO.enviaDrive();
-            /* Enviando o vetor de candidatos para o Drive*/
-            candidatoDAO.enviaDrive();
-            /* Enviando o vetor de votos para o Drive*/
-            votoDAO.enviaDrive();
-            
-            /* Fechando a urna*/
-            this.dispose();
         }
         
-    }//GEN-LAST:event_btnConfirmaMouseClicked
+        /* Colocando true para o eleitor que acabou de votar*/
+        eleitor.setVotou(true);
+            
+        /* Criando uma variavel do tipo FileWriter*/
+        FileWriter arq = null;
+        try {
+            /* Criando um arquivo Json sem nada dentro*/
+            arq = new FileWriter("./ArquivosJson/Candidato.json");
+
+            /* Fechando o arquivo*/
+            arq.close();
+
+            /* Colocando null na variavel arq para reutiliza-la*/
+            arq = null;
+
+            /* Criando um arquivo Json sem nada dentro*/
+            arq = new FileWriter("./ArquivosJson/Eleitor.json");
+
+            /* Fechando o arquivo*/
+            arq.close();
+
+        } catch (IOException ex) {
+            Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
+        }
+            
+        /* Laco do tamanho do vetor de candidatos*/            
+        for(int i =0; i < candidatos.length; i++){
+
+            /*Evita o null pointer exception*/
+            if(candidatos[i] != null){
+
+                /* Inserindo no arquivo Json, os dados atualizados dos candidatos*/
+                candidatoDAO.inserirJson(candidatos[i]);
+            }
+        }
+            
+        /* Laco do tamanho do vetor de eleitores*/
+        for(int i =0; i < eleitores.length; i++){
+            
+            /*Evita o null pointer exception*/
+            if(eleitores[i] != null){
+                
+                /* Inserindo no arquivo Json, os dados atualizados do eleitor em relacao aos votos*/
+                eleitorDAO.inserirJson(eleitores[i]);
+            }
+        }
+        
+        /* Som do Confirma da Urna*/
+        playSound("urnaConfirma.wav");
+        
+        /* Desabilitando a tela da urna*/
+        desabilitandoTelaUrna();
+            
+        /* Guardando o CPF do eleitor para contabilizar os votos*/
+        votoContabilizar.setCpfEleitor(eleitor.getCpf());
+        
+        /* Guardando o candidato que o eleitor votou (se votou nulo ou branco esse variavel estara nula)*/
+        votoContabilizar.setCandidato(candidatoVoto);
+        
+        if ((votoDAO.inserir(votoContabilizar)     == false) || /* Colocando o voto no vetor de votos*/
+            (votoDAO.inserirJson(votoContabilizar) == false) || /* Colocando o voto no arquivo JSON*/
+            (eleitorDAO.enviaDrive()               == false) || /* Enviando o vetor de eleitores para o Drive*/
+            (candidatoDAO.enviaDrive()             == false) || /* Enviando o vetor de candidatos para o Drive*/
+            (votoDAO.enviaDrive()                  == false)){  /* Enviando o vetor de votos para o Drive*/
+            
+            return ;
+        }
+        
+        /* Fechando a urna*/
+        this.dispose();
+        
+        /*Volta o cursor como estava*/
+        this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));        
+    }//GEN-LAST:event_btnConfirmaActionPerformed
     
  
     // Variables declaration - do not modify//GEN-BEGIN:variables

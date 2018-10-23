@@ -1,3 +1,12 @@
-{"nome":"Jair Messias Bolsonaro","numero":17,"cpf":"123.456.789-09","partido":{"nome":"Partido Social Liberal","numero":17,"sigla":"PSL"},"qtdeVoto":0}
-{"nome":"Fernando Haddad","numero":13,"cpf":"654.208.790-77","partido":{"nome":"Partido dos Trabalhadores","numero":13,"sigla":"PT"},"qtdeVoto":0}
-{"nome":"Vera Lúcia","numero":16,"cpf":"123.456.789-09","partido":{"nome":"partido da vera lucia","numero":16,"sigla":"PSTU"},"qtdeVoto":3}
+{"nome":"Fernando Haddad","numero":13,"cpf":"846.958.400-65","partido":{"nome":"Partido dos Trabalhadores","numero":13,"sigla":"PT"},"qtdeVoto":0}
+{"nome":"Jair Bolsonaro","numero":17,"cpf":"260.861.330-69","partido":{"nome":"Partido Social Liberal","numero":17,"sigla":"PSL"},"qtdeVoto":1}
+{"nome":"Alvaro Dias","numero":19,"cpf":"352.774.560-23","partido":{"nome":"Podemos","numero":19,"sigla":"PODE"},"qtdeVoto":0}
+{"nome":"Cabo Daciolo","numero":51,"cpf":"643.179.990-99","partido":{"nome":"Patriota","numero":51,"sigla":"PATRI"},"qtdeVoto":0}
+{"nome":"Eymael","numero":27,"cpf":"076.419.170-54","partido":{"nome":"Democracia Cristã","numero":27,"sigla":"DC"},"qtdeVoto":0}
+{"nome":"Geraldo Alckmin","numero":45,"cpf":"776.534.560-57","partido":{"nome":"Partido da Social Democracia Brasileira","numero":45,"sigla":"PSDB"},"qtdeVoto":0}
+{"nome":"Guilherme Boulos","numero":50,"cpf":"866.483.980-86","partido":{"nome":"Partido Socialismo e Liberdade","numero":50,"sigla":"PSOL"},"qtdeVoto":0}
+{"nome":"Henrique Meirelles","numero":15,"cpf":"787.013.550-07","partido":{"nome":"Movimento Democrático Brasileiro","numero":15,"sigla":"MDB"},"qtdeVoto":0}
+{"nome":"João Amoêdo","numero":30,"cpf":"221.372.720-16","partido":{"nome":"Partido Novo","numero":30,"sigla":"NOVO"},"qtdeVoto":0}
+{"nome":"João Goulart Filho","numero":54,"cpf":"721.921.600-97","partido":{"nome":"Partido Pátria Livre","numero":54,"sigla":"PPL"},"qtdeVoto":0}
+{"nome":"Marina Silva","numero":18,"cpf":"721.088.540-45","partido":{"nome":"Rede Sustentabilidade","numero":18,"sigla":"REDE"},"qtdeVoto":0}
+{"nome":"Vera","numero":16,"cpf":"035.804.650-58","partido":{"nome":"Partido Socialista dos Trabalhadores Unificado","numero":16,"sigla":"PSTU"},"qtdeVoto":1}
