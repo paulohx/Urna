@@ -1,11 +1,12 @@
 package util;
 
-/**
- *
- * @author jefferson
- */
 public class Verifica {
     
+    /**
+     * Verifica se o cpf é válido usando o cálculo do digito verificador.
+     * @param cpf O cpf a ser verificado.
+     * @return boolean - Retorna true se o cpf for válido, caso contrário retorna false.
+     */
     public boolean Cpf(String cpf){
         
         /*Verfica se nao esta vindo nada em caso de algum erro*/
@@ -47,6 +48,7 @@ public class Verifica {
                 iguais += digitos[i];                
             }
             
+            /*Esses casos burlam o calculo do digito verificador entao tem que ser verificados separadamentes*/
             if (iguais.equals("111111111") ||
                 iguais.equals("222222222") ||
                 iguais.equals("333333333") ||
@@ -56,6 +58,7 @@ public class Verifica {
                 iguais.equals("777777777") ||
                 iguais.equals("888888888") ||
                 iguais.equals("999999999")){
+                
                 return false;
             }
             

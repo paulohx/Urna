@@ -1,18 +1,39 @@
 apply plugin: 'java'
 apply plugin: 'application'
 
+/*Onde esta localizado o main*/
 mainClassName = 'visao/Login'
+
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 version = '1.0'
+
+/*Identifica o main para gerar o .jar*/
+task geraJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'Gradle Jar File Example',  
+        	   'Implementation-Version': version,
+        	   'Main-Class': 'visao/Login'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    
+    /*Dependencias para conectar no drive*/
     compile 'com.google.api-client:google-api-client:1.23.0'
     compile 'com.google.oauth-client:google-oauth-client-jetty:1.23.0'
     compile 'com.google.apis:google-api-services-drive:v3-rev110-1.23.0'
-    compile 'com.google.code.gson:gson:2.8.1'
+    
+    /*Dependencias para utilizar a biblioteca gson da google para manipular os arquivos json*/
+    compile 'com.google.code.gson:gson:2.8.1'    
+    
+    /*Dependencias para utilizar o grafico afim de mostrar os resultados da eleicao*/
+    compile group: 'jfree', name: 'jfreechart', version: '1.0.12' /*https://mvnrepository.com/artifact/jfree/jfreechart/1.0.12*/
 }

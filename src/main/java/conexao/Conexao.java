@@ -60,7 +60,7 @@ public class Conexao {
     /**
      * Cria um objeto de credencial autorizado.
      * @param HTTP_TRANSPORT HTTP transporte da rede.
-     * @return Um objeto de credencial autorizado.
+     * @return Credential - Um objeto de credencial autorizado.
      * @throws IOException se o arquivo de credentials.json não for encontrado.
      */
     private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
@@ -81,7 +81,7 @@ public class Conexao {
     
     /**
      * Caso o serviço ainda não esteja instânciado então instância.
-     * @return O servico
+     * @return Drive - O servico
      */
     public static Drive service() {
         
@@ -94,7 +94,7 @@ public class Conexao {
     /**
      * Verifica se existe essa pasta no Google Drive.
      * @param nome Nome da pasta.
-     * @return Retorna o id dessa pasta ou se ela não existir retorna "".
+     * @return String - Retorna o id dessa pasta ou se ela não existir retorna "".
      * @throws IOException
      * @throws GeneralSecurityException 
      */
@@ -128,7 +128,7 @@ public class Conexao {
     /**
      * Verifica se existe esse arquivo no Google Drive. 
      * @param nome Nome do arquivo.
-     * @return Retorna o id desse arquivo ou se ele não existir retorn "".
+     * @return String - Retorna o id desse arquivo ou se ele não existir retorn "".
      * @throws IOException
      * @throws GeneralSecurityException 
      */
@@ -163,7 +163,7 @@ public class Conexao {
      * Cria uma pasta no Google Drive.
      * @param service Serviço instânciado.
      * @param name Nome da pasta.
-     * @return Retorna o id da pasta criada.
+     * @return String - Retorna o id da pasta criada.
      * @throws IOException
      * @throws GeneralSecurityException 
      */
@@ -191,7 +191,7 @@ public class Conexao {
      * Envia um arquivo para o Google Drive.
      * @param idPasta Id da pasta pra onde quer enviar o arquivo.
      * @param url Caminho especificando onde está o arquivo que quer enviar para o Google Drive.
-     * @return Retorna o id do arquivo que foi enviado.
+     * @return String - Retorna o id do arquivo que foi enviado.
      * @throws IOException
      * @throws GeneralSecurityException 
      */
@@ -210,7 +210,7 @@ public class Conexao {
     /**
      * Mostra o conteúdo de um arquivo do Google Drive.
      * @param idArquivo Id do arquivo que queria imprimir.
-     * @return Retorna o conteúdo do arquivo em forma de String;
+     * @return String - Retorna o conteúdo do arquivo em forma de String;
      * @throws IOException
      * @throws GeneralSecurityException 
      */
