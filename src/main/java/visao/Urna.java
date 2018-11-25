@@ -1,5 +1,6 @@
 package visao;
 
+import conexao.Conexao;
 import dao.CandidatoDAO;
 import dao.EleitorDAO;
 import dao.PartidoDAO;
@@ -10,32 +11,38 @@ import java.awt.Cursor;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import modelo.CadCandidato;
-import modelo.CadEleitor;
+import java.util.List;
+import modelo.Candidato;
+import modelo.Eleitor;
 import modelo.Voto;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.AudioSystem;
+import javax.swing.JOptionPane;
 
 public class Urna extends javax.swing.JFrame {
     
     CandidatoDAO candidatoDAO = new CandidatoDAO();
     PartidoDAO   partidoDAO   = new PartidoDAO();
     VotoDAO      votoDAO      = new VotoDAO();
-    UrnaDAO      urna         = new UrnaDAO();
     EleitorDAO   eleitorDAO   = new EleitorDAO();
     
-    CadEleitor eleitor = null;
-    CadCandidato candidatoVoto = null;
-    Voto votoContabilizar = null;
+    Eleitor eleitor = null;
+    Voto    voto    = null;
     
-    CadCandidato candidatos[] = candidatoDAO.getVetorCandidato();
-    Voto voto[] = votoDAO.getVetorVoto();
-    CadEleitor eleitores[]  ;
-    boolean primeiroDigito;
+    Candidato deputadoFederalVoto = null;
+    Candidato presidenteVoto      = null;
+    
+    List<Candidato> candidatos = candidatoDAO.getVetorCandidato();
+    List<Eleitor> eleitores;
+    
+    boolean prePrimeiroDigito;
+    boolean depPrimeiroDigito;
+    boolean depSegundoDigito;
+    boolean depTerceiroDigito;
     boolean votoBranco = false;
+    
+    String  mensagem   = "";
 
     /**
      * Construtor da classe com parâmetro.
@@ -43,17 +50,20 @@ public class Urna extends javax.swing.JFrame {
      * @param urna A urna em que está ocorrendo o voto.
      * @param eleitorDAO O dao do eleitor.
      */
-    public Urna(CadEleitor eleitor, UrnaDAO urna, EleitorDAO eleitorDAO){
+    public Urna(Eleitor eleitor, UrnaDAO urna, EleitorDAO eleitorDAO) {
         
-        this.eleitor          = eleitor;
-        this.votoContabilizar = new Voto(urna);
-        this.eleitorDAO       = eleitorDAO;
-        this.eleitores        = this.eleitorDAO.getVetorEleitor();
+        this.eleitor    = eleitor;
+        this.voto       = new Voto(urna);
+        this.eleitorDAO = eleitorDAO;
+        this.eleitores  = this.eleitorDAO.getVetorEleitor();
         
         initComponents();
         
         /*Ainda nao foi inserido nenhum numero*/
-        primeiroDigito = false;
+        prePrimeiroDigito = false;
+        depPrimeiroDigito = false;
+        depSegundoDigito  = false;
+        depTerceiroDigito = false;
         
         this.requestFocus();
         this.setTitle("Urna eletrônica");
@@ -63,20 +73,66 @@ public class Urna extends javax.swing.JFrame {
         
         /*Colore os componentes da tela*/
         iniciaCores();
+        
+        /*Verifica se a pasta local esta criada*/
+        File dir = new File("ArquivosJson");
+        
+        /*Caso nao estiver entao cria*/
+        dir.mkdirs();
+
+        /*Antes de fazer algo usando a conexao verifica primeiro se tem internet*/
+        if (!Conexao.getInternet()){
+            JOptionPane.showMessageDialog(this, "Sem acesso a internet.", "Erro", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        }
     
-        /* Baixando os dados dos partidos do Drive */
-        try {
-            partidoDAO.baixarPartidoJson();
-        } catch (IOException ex) {
-            Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
+        /*Baixa os arquivos .json do drive e coloca na pasta ArquivosJson, sao usadas Threads para ficar mais rapido o processo*/
+        Thread p = new Thread(){
+            @Override
+            public void run() {
+                try {
+                    partidoDAO.baixarPartidoJson();
+                }catch(Exception e){
+                    mensagem = "Houve um erro ao baixar os partidos do drive.";
+                }
+            }            
+        };
+
+        Thread c = new Thread(){
+            @Override
+            public void run() {
+                try {
+                    candidatoDAO.baixarCandidatoJson();
+                }catch(Exception e){
+                    mensagem = "Houve um erro ao baixar os candidatos do drive.";
+                }
+            }            
+        };
+            
+        /*Inicia a execucao das threads*/
+        p.start();
+        c.start();
+        
+        /*Espera cada Thread ser finalizada para prosseguir*/
+        try {            
+            
+            p.join();
+            p.interrupt();
+            c.join();
+            c.interrupt();
+            
+            if (!mensagem.equals("")){
+                JOptionPane.showMessageDialog(this, mensagem, "Erro", JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
+            }
+
+        } catch (InterruptedException ex) {
+            JOptionPane.showMessageDialog(this, "Houve algum erro ao baixar os arquivos .json do drive.", "Erro", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
         }
         
-        /* Baixando os dados dos candidatos do Drive */
-        try {
-            candidatoDAO.baixarCandidatoJson();
-        } catch (IOException ex) {
-            Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        /*O panel do deputado ficara falso pois o eleitor ira votar primeiro no presidente*/
+        pnlDeputadoFederal.setVisible(false);
     }
 
     /**
@@ -137,25 +193,42 @@ public class Urna extends javax.swing.JFrame {
         btnNum1 = new javax.swing.JButton();
         btnNum3 = new javax.swing.JButton();
         btnNum0 = new javax.swing.JButton();
-        panel3 = new java.awt.Panel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        panelIcone = new java.awt.Panel();
+        jLabel2 = new javax.swing.JLabel();
+        pnlPresidente = new java.awt.Panel();
         panel2 = new java.awt.Panel();
         label1 = new java.awt.Label();
         label2 = new java.awt.Label();
         label3 = new java.awt.Label();
         label4 = new java.awt.Label();
-        texSegundoDigito = new java.awt.TextField();
-        texPrimeiroDigito = new java.awt.TextField();
+        texPrePrimeiroDigito = new java.awt.TextField();
         label5 = new java.awt.Label();
         label6 = new java.awt.Label();
         label7 = new java.awt.Label();
         label8 = new java.awt.Label();
         label9 = new java.awt.Label();
-        lblCandidatoNome = new java.awt.Label();
-        lblCandidatoPartido = new java.awt.Label();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        panelIcone = new java.awt.Panel();
-        jLabel2 = new javax.swing.JLabel();
+        lblPreNome = new java.awt.Label();
+        lblPrePartido = new java.awt.Label();
+        texPreSegundoDigito = new java.awt.TextField();
+        pnlDeputadoFederal = new java.awt.Panel();
+        panel3 = new java.awt.Panel();
+        label10 = new java.awt.Label();
+        label11 = new java.awt.Label();
+        label12 = new java.awt.Label();
+        label13 = new java.awt.Label();
+        label14 = new java.awt.Label();
+        label16 = new java.awt.Label();
+        label17 = new java.awt.Label();
+        label18 = new java.awt.Label();
+        lblDepNome = new java.awt.Label();
+        lblDepPartido = new java.awt.Label();
+        texDepPrimeiroDigito = new java.awt.TextField();
+        texDepSegundoDigito = new java.awt.TextField();
+        texDepTerceiroDigito = new java.awt.TextField();
+        texDepQuartoDigito = new java.awt.TextField();
+        label21 = new java.awt.Label();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setBounds(new java.awt.Rectangle(0, 0, 0, 0));
@@ -442,7 +515,40 @@ public class Urna extends javax.swing.JFrame {
         getContentPane().add(panel1);
         panel1.setBounds(556, 73, 336, 431);
 
-        panel3.setBackground(new java.awt.Color(122, 113, 113));
+        jLabel1.setFont(new java.awt.Font("Ubuntu", 1, 26)); // NOI18N
+        jLabel1.setText("JUSTIÇA");
+        getContentPane().add(jLabel1);
+        jLabel1.setBounds(785, 0, 107, 31);
+
+        jLabel3.setFont(new java.awt.Font("Ubuntu", 1, 26)); // NOI18N
+        jLabel3.setText("ELEITORAL");
+        getContentPane().add(jLabel3);
+        jLabel3.setBounds(749, 32, 143, 31);
+
+        panelIcone.setBackground(new java.awt.Color(254, 254, 254));
+
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/logotipo-miniatura.png"))); // NOI18N
+
+        javax.swing.GroupLayout panelIconeLayout = new javax.swing.GroupLayout(panelIcone);
+        panelIcone.setLayout(panelIconeLayout);
+        panelIconeLayout.setHorizontalGroup(
+            panelIconeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelIconeLayout.createSequentialGroup()
+                .addComponent(jLabel2)
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+        panelIconeLayout.setVerticalGroup(
+            panelIconeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelIconeLayout.createSequentialGroup()
+                .addComponent(jLabel2)
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+
+        getContentPane().add(panelIcone);
+        panelIcone.setBounds(595, 10, 57, 53);
+
+        pnlPresidente.setBackground(new java.awt.Color(122, 113, 113));
+        pnlPresidente.setLayout(null);
 
         panel2.setBackground(new java.awt.Color(254, 254, 254));
 
@@ -489,128 +595,172 @@ public class Urna extends javax.swing.JFrame {
                 .addComponent(label4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
-        texSegundoDigito.setEditable(false);
-        texSegundoDigito.setEnabled(false);
-        texSegundoDigito.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        pnlPresidente.add(panel2);
+        panel2.setBounds(0, 410, 510, 100);
 
-        texPrimeiroDigito.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
-        texPrimeiroDigito.setEditable(false);
-        texPrimeiroDigito.setEnabled(false);
-        texPrimeiroDigito.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        texPrePrimeiroDigito.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
+        texPrePrimeiroDigito.setEditable(false);
+        texPrePrimeiroDigito.setEnabled(false);
+        texPrePrimeiroDigito.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        pnlPresidente.add(texPrePrimeiroDigito);
+        texPrePrimeiroDigito.setBounds(147, 96, 90, 90);
 
         label5.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         label5.setText("SEU VOTO PARA");
+        pnlPresidente.add(label5);
+        label5.setBounds(18, 10, 181, 29);
 
         label6.setFont(new java.awt.Font("Dialog", 1, 36)); // NOI18N
         label6.setText("PRESIDENTE");
+        pnlPresidente.add(label6);
+        label6.setBounds(20, 49, 460, 37);
 
         label7.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         label7.setText("Número:");
+        pnlPresidente.add(label7);
+        label7.setBounds(18, 114, 100, 51);
 
         label8.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         label8.setText("Partido:");
+        pnlPresidente.add(label8);
+        label8.setBounds(18, 286, 100, 51);
 
         label9.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         label9.setText("Nome:");
+        pnlPresidente.add(label9);
+        label9.setBounds(18, 224, 100, 51);
 
-        lblCandidatoNome.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblPreNome.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        pnlPresidente.add(lblPreNome);
+        lblPreNome.setBounds(128, 224, 382, 51);
 
-        lblCandidatoPartido.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblPrePartido.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        pnlPresidente.add(lblPrePartido);
+        lblPrePartido.setBounds(128, 285, 382, 52);
+
+        texPreSegundoDigito.setEditable(false);
+        texPreSegundoDigito.setEnabled(false);
+        texPreSegundoDigito.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        pnlPresidente.add(texPreSegundoDigito);
+        texPreSegundoDigito.setBounds(247, 96, 90, 90);
+
+        getContentPane().add(pnlPresidente);
+        pnlPresidente.setBounds(30, 50, 510, 510);
+
+        pnlDeputadoFederal.setBackground(new java.awt.Color(122, 113, 113));
+        pnlDeputadoFederal.setLayout(null);
+
+        panel3.setBackground(new java.awt.Color(254, 254, 254));
+
+        label10.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        label10.setText("Aperte a tecla:");
+
+        label11.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        label11.setText("VERDE para CONFIRMAR o voto");
+
+        label12.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        label12.setText("LARANJA para CORRIGIR o voto");
+
+        label13.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        label13.setText("BRANCO para ANULAR o voto");
 
         javax.swing.GroupLayout panel3Layout = new javax.swing.GroupLayout(panel3);
         panel3.setLayout(panel3Layout);
         panel3Layout.setHorizontalGroup(
             panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(panel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(panel3Layout.createSequentialGroup()
-                .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addContainerGap()
+                .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(panel3Layout.createSequentialGroup()
-                        .addGap(115, 115, 115)
-                        .addComponent(label6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(label10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(24, 24, 24))
                     .addGroup(panel3Layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
+                        .addComponent(label11, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(265, Short.MAX_VALUE))
+                    .addGroup(panel3Layout.createSequentialGroup()
                         .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(panel3Layout.createSequentialGroup()
-                                .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(label7, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(label9, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(label8, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(panel3Layout.createSequentialGroup()
-                                        .addGap(10, 10, 10)
-                                        .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(lblCandidatoPartido, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(lblCandidatoNome, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                                    .addGroup(panel3Layout.createSequentialGroup()
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
-                                        .addComponent(texPrimeiroDigito, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(texSegundoDigito, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 173, Short.MAX_VALUE))))
-                            .addGroup(panel3Layout.createSequentialGroup()
-                                .addComponent(label5, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE)))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(label12, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(label13, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         panel3Layout.setVerticalGroup(
             panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(label5, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(label6, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(texSegundoDigito, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
-                        .addComponent(texPrimeiroDigito, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(panel3Layout.createSequentialGroup()
-                        .addComponent(label7, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(21, 21, 21)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 38, Short.MAX_VALUE)
-                .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(label9, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblCandidatoNome, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(label8, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblCandidatoPartido, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(73, 73, 73)
-                .addComponent(panel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGroup(panel3Layout.createSequentialGroup()
+                .addComponent(label10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(2, 2, 2)
+                .addComponent(label11, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(2, 2, 2)
+                .addComponent(label12, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(2, 2, 2)
+                .addComponent(label13, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
-        getContentPane().add(panel3);
-        panel3.setBounds(21, 55, 510, 500);
+        pnlDeputadoFederal.add(panel3);
+        panel3.setBounds(0, 410, 520, 100);
 
-        jLabel1.setFont(new java.awt.Font("Ubuntu", 1, 26)); // NOI18N
-        jLabel1.setText("JUSTIÇA");
-        getContentPane().add(jLabel1);
-        jLabel1.setBounds(785, 0, 107, 31);
+        label14.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        label14.setText("SEU VOTO PARA");
+        pnlDeputadoFederal.add(label14);
+        label14.setBounds(18, 10, 181, 29);
 
-        jLabel3.setFont(new java.awt.Font("Ubuntu", 1, 26)); // NOI18N
-        jLabel3.setText("ELEITORAL");
-        getContentPane().add(jLabel3);
-        jLabel3.setBounds(749, 32, 143, 31);
+        label16.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        label16.setText("Número:");
+        pnlDeputadoFederal.add(label16);
+        label16.setBounds(18, 114, 100, 51);
 
-        panelIcone.setBackground(new java.awt.Color(254, 254, 254));
+        label17.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        label17.setText("Partido:");
+        pnlDeputadoFederal.add(label17);
+        label17.setBounds(18, 286, 100, 51);
 
-        javax.swing.GroupLayout panelIconeLayout = new javax.swing.GroupLayout(panelIcone);
-        panelIcone.setLayout(panelIconeLayout);
-        panelIconeLayout.setHorizontalGroup(
-            panelIconeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelIconeLayout.createSequentialGroup()
-                .addComponent(jLabel2)
-                .addGap(0, 24, Short.MAX_VALUE))
-        );
-        panelIconeLayout.setVerticalGroup(
-            panelIconeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelIconeLayout.createSequentialGroup()
-                .addComponent(jLabel2)
-                .addGap(0, 0, Short.MAX_VALUE))
-        );
+        label18.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        label18.setText("Nome:");
+        pnlDeputadoFederal.add(label18);
+        label18.setBounds(18, 224, 100, 51);
 
-        getContentPane().add(panelIcone);
-        panelIcone.setBounds(595, 10, 24, 0);
+        lblDepNome.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        pnlDeputadoFederal.add(lblDepNome);
+        lblDepNome.setBounds(128, 224, 382, 51);
+
+        lblDepPartido.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        pnlDeputadoFederal.add(lblDepPartido);
+        lblDepPartido.setBounds(128, 285, 382, 52);
+
+        texDepPrimeiroDigito.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
+        texDepPrimeiroDigito.setEditable(false);
+        texDepPrimeiroDigito.setEnabled(false);
+        texDepPrimeiroDigito.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        pnlDeputadoFederal.add(texDepPrimeiroDigito);
+        texDepPrimeiroDigito.setBounds(120, 110, 70, 80);
+
+        texDepSegundoDigito.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
+        texDepSegundoDigito.setEditable(false);
+        texDepSegundoDigito.setEnabled(false);
+        texDepSegundoDigito.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        pnlDeputadoFederal.add(texDepSegundoDigito);
+        texDepSegundoDigito.setBounds(200, 110, 70, 80);
+
+        texDepTerceiroDigito.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
+        texDepTerceiroDigito.setEditable(false);
+        texDepTerceiroDigito.setEnabled(false);
+        texDepTerceiroDigito.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        pnlDeputadoFederal.add(texDepTerceiroDigito);
+        texDepTerceiroDigito.setBounds(280, 110, 70, 80);
+
+        texDepQuartoDigito.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
+        texDepQuartoDigito.setEditable(false);
+        texDepQuartoDigito.setEnabled(false);
+        texDepQuartoDigito.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        pnlDeputadoFederal.add(texDepQuartoDigito);
+        texDepQuartoDigito.setBounds(360, 110, 70, 80);
+
+        label21.setFont(new java.awt.Font("Dialog", 1, 36)); // NOI18N
+        label21.setText("DEPUTADO FEDERAL");
+        pnlDeputadoFederal.add(label21);
+        label21.setBounds(70, 50, 430, 37);
+
+        getContentPane().add(pnlDeputadoFederal);
+        pnlDeputadoFederal.setBounds(20, 40, 530, 510);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -626,34 +776,61 @@ public class Urna extends javax.swing.JFrame {
             Clip clip = AudioSystem.getClip( );
             clip.open(audioInputStream);
             clip.start( );
-        }catch(Exception ex){
-            ex.printStackTrace( );
-        }
+        }catch(Exception ex){}
     }
 
     /**
      * Função que pega os 2 digitos que o eleitor escolheu e verifica se tem algum candidato com os mesmo.
-     * @return CadCandidato - Se ouver ele pega o nome do candidato e o nome do partido e retorna o candidato
+     * @return Candidato - Se ouver ele pega o nome do candidato e o nome do partido e retorna o candidato.
      */
-    private CadCandidato verificandoCandidato(){
+    private Candidato verificandoCandidato() {
         
-        int aux1 = Character.getNumericValue(texPrimeiroDigito.getText().charAt(2)); 
-        int aux2 = Character.getNumericValue(texSegundoDigito.getText().charAt(2)); 
+        /*O eleitor esta votando no presidente no momento*/
+        if (pnlPresidente.isVisible()){
         
-        String aux;
+            int aux1 = Character.getNumericValue(texPrePrimeiroDigito.getText().charAt(2)); 
+            int aux2 = Character.getNumericValue(texPreSegundoDigito.getText().charAt(2)); 
+
+            String aux;
+
+            aux  = Integer.toString(aux1);
+            aux += Integer.toString(aux2);
+
+            presidenteVoto = candidatoDAO.getPresidenteByNum(Integer.parseInt(aux));
+            if(presidenteVoto != null){
+                lblPreNome.setText(presidenteVoto.getNome());
+                lblPrePartido.setText(presidenteVoto.getPartido().getNome());
+                return(presidenteVoto);
+            }else{
+                lblPreNome.setText("VOTO NULO");
+                return(presidenteVoto);
+            }
         
-        aux  = Integer.toString(aux1);
-        aux += Integer.toString(aux2);
-        
-        candidatoVoto = candidatoDAO.getCandidatoByNum(Integer.parseInt(aux));
-        if(candidatoVoto != null){
-            lblCandidatoNome.setText(candidatoVoto.getNome());
-            lblCandidatoPartido.setText(candidatoVoto.getPartido().getNome());
-            return(candidatoVoto);
-        }else{
-            lblCandidatoNome.setText("VOTO NULO");
-            return(candidatoVoto);
-        }        
+        /*O eleitor esta votando no deputado federal no momento*/
+        }else {
+    
+            int aux1 = Character.getNumericValue(texDepPrimeiroDigito.getText().charAt(1));
+            int aux2 = Character.getNumericValue(texDepSegundoDigito.getText().charAt(1));
+            int aux3 = Character.getNumericValue(texDepTerceiroDigito.getText().charAt(1));
+            int aux4 = Character.getNumericValue(texDepQuartoDigito.getText().charAt(1));
+
+            String aux;
+
+            aux  = Integer.toString(aux1);
+            aux += Integer.toString(aux2);
+            aux += Integer.toString(aux3);
+            aux += Integer.toString(aux4);
+
+            deputadoFederalVoto = candidatoDAO.getDeputadoFederalByNum(Integer.parseInt(aux));
+            if(deputadoFederalVoto != null){
+                lblDepNome.setText(deputadoFederalVoto.getNome());
+                lblDepPartido.setText(deputadoFederalVoto.getPartido().getNome());
+                return(deputadoFederalVoto);
+            }else{
+                lblDepNome.setText("VOTO NULO");
+                return(deputadoFederalVoto);
+            }
+        }
     }
 
     /**
@@ -672,7 +849,6 @@ public class Urna extends javax.swing.JFrame {
         btnNum7.setEnabled(controle);
         btnNum8.setEnabled(controle);
         btnNum9.setEnabled(controle);
-        
     }
     
     /**
@@ -689,46 +865,117 @@ public class Urna extends javax.swing.JFrame {
         label7.setVisible(false);
         label8.setVisible(false);
         label9.setVisible(false);
-        texPrimeiroDigito.setVisible(false);
-        texSegundoDigito.setVisible(false);
-        lblCandidatoNome.setVisible(false);
-        lblCandidatoPartido.setVisible(false);
+        
+        /*O eleitor esta votando no presidente no momento*/
+        if (pnlPresidente.isVisible()) {
+            
+            texPrePrimeiroDigito.setVisible(false);
+            texPreSegundoDigito.setVisible(false);
+            lblPreNome.setVisible(false);
+            lblPrePartido.setVisible(false);
+            
+        /*O eleitor esta votando no deputado federal no momento*/
+        }else {
+            
+            texDepPrimeiroDigito.setVisible(false);
+            texDepSegundoDigito.setVisible(false);
+            texDepTerceiroDigito.setVisible(false);
+            texDepQuartoDigito.setVisible(false);
+            lblDepNome.setVisible(false);
+            lblDepPartido.setVisible(false);
+        }            
+    }
+    
+    /**
+     * Função utilizada para sempre quando o usuário clicar em algum dos digitos, dar um bip e mostrar o valor.
+     * @param valor O valor a ser mostrado.
+     */
+    private void clicandoNosNumeros(int valor) {
+        
+        /* Som do Digito da urna*/
+        playSound("urnaDigito.wav");
+        
+        /*O eleitor esta votando no presidente no momento*/
+        if (pnlPresidente.isVisible()){
+            
+            /* Verificando se o primeiro digito e falso*/
+            if(!prePrimeiroDigito){
+                /* Setando 1 para o text do digito 1*/
+                texPrePrimeiroDigito.setText("  " + valor);
+                /* Setando true para a variavel de controle*/
+                prePrimeiroDigito = true;
+            }else{/* Se não*/
+                /* Setando 1 para o text do digito 2*/
+                texPreSegundoDigito.setText("  " + valor);
+                /* Chamando funcao que verifica se o candidato e valido e retorna ele como parametro*/
+                presidenteVoto = verificandoCandidato();
+            }
+        
+        /*O eleitor esta votando no deputado federal no momento*/
+        }else {
+                        
+            if(!depPrimeiroDigito){
+                texDepPrimeiroDigito.setText(" " + valor);
+                depPrimeiroDigito = true;
+            }else if (!depSegundoDigito){
+                texDepSegundoDigito.setText(" " + valor);
+                depSegundoDigito = true;                
+            }else if (!depTerceiroDigito){
+                texDepTerceiroDigito.setText(" " + valor);
+                depTerceiroDigito = true;
+            }else{
+                texDepQuartoDigito.setText(" " + valor);
+                controleBotoes(false);
+                deputadoFederalVoto = verificandoCandidato();
+            }
+        }
     }
     
     private void btnNum1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum1ActionPerformed
-        /* Verificando se o primeiro digito é falso*/
-        if(!primeiroDigito){
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 1 para o text do digito 1*/
-            texPrimeiroDigito.setText("  1");
-            /* Setando true para a variavel de controle*/
-            primeiroDigito = true;
-        }else{/* Se não*/
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 1 para o text do digito 2*/
-            texSegundoDigito.setText("  1");
-            /* Chamando funçaõ para setar false no enable dos botẽs*/
-            controleBotoes(false);
-            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
-            candidatoVoto = verificandoCandidato();
-        }
+        clicandoNosNumeros(1);
     }//GEN-LAST:event_btnNum1ActionPerformed
 
     private void btnCorrigeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCorrigeActionPerformed
-        /* Chamando funçaõ para setar true no enable dos botẽs*/
+        
+        /* Chamando funcao para setar true no enable dos botoes*/
         controleBotoes(true);
-        /* Limpando os text e os labels para o eleitor poder corrigir seu voto*/
-        texPrimeiroDigito.setText("");
-        texSegundoDigito.setText("");
-        lblCandidatoNome.setText("");
-        lblCandidatoPartido.setText("");
-        /* Setando falso para a variavel de controle primeiro digito */
-        primeiroDigito = false;
+        
+        /*O eleitor esta votando no presidente no momento*/
+        if (pnlPresidente.isVisible()){
+            
+            /* Limpando os text e os labels para o eleitor poder corrigir seu voto*/
+            texPrePrimeiroDigito.setText("");
+            texPreSegundoDigito.setText("");
+            lblPreNome.setText("");
+            lblPrePartido.setText("");
+            
+            /* Setando falso para a variavel de controle primeiro digito */
+            prePrimeiroDigito = false;
+            
+            presidenteVoto = null;
+            
+        /*O eleitor esta votando no deputado federal no momento*/
+        }else {
+            
+            /* Limpando os text e os labels para o eleitor poder corrigir seu voto*/
+            texDepPrimeiroDigito.setText("");
+            texDepSegundoDigito.setText("");
+            texDepTerceiroDigito.setText("");
+            texDepQuartoDigito.setText("");
+            lblDepNome.setText("");
+            lblDepPartido.setText("");
+            
+            depPrimeiroDigito = false;
+            depSegundoDigito  = false;
+            depTerceiroDigito = false;
+            
+            deputadoFederalVoto = null;
+        }
     }//GEN-LAST:event_btnCorrigeActionPerformed
-    /* Arrumando o cursor do mouse para sempre que ele passar em cima de um botão*/
-    /* ele mudar o cursor para uma mãozinha e sempre que sair do botão voltar para o padrão*/
+    /* 
+       Arrumando o cursor do mouse para sempre que ele passar em cima de um botao,
+       ele mudar o cursor para uma maozinha e sempre que sair do botao voltar para o padrao.
+    */
     private void btnConfirmaMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnConfirmaMouseEntered
         this.setCursor(new Cursor(Cursor.HAND_CURSOR));
     }//GEN-LAST:event_btnConfirmaMouseEntered
@@ -834,309 +1081,310 @@ public class Urna extends javax.swing.JFrame {
     }//GEN-LAST:event_btnNum6MouseExited
 
     private void btnNum2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum2ActionPerformed
-        /* Verificando se o primeiro digito é falso*/
-        if(!primeiroDigito){             
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 2 para o text do digito 1*/
-            texPrimeiroDigito.setText("  2");
-            /* Setando true para a variavel de controle*/
-            primeiroDigito = true;
-        }else{
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 2 para o text do digito 2*/
-            texSegundoDigito.setText("  2");
-            /* Chamando funçaõ para setar false no enable dos botẽs*/
-            controleBotoes(false);
-            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
-            candidatoVoto = verificandoCandidato();
-        }
+        clicandoNosNumeros(2);
     }//GEN-LAST:event_btnNum2ActionPerformed
 
     private void btnNum3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum3ActionPerformed
-        /* Verificando se o primeiro digito é falso*/
-        if(!primeiroDigito){
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 3 para o text do digito 1*/
-            texPrimeiroDigito.setText("  3");
-            /* Setando true para a variavel de controle*/
-            primeiroDigito = true;
-        }else{
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 3 para o text do digito 2*/
-            texSegundoDigito.setText("  3");
-            /* Chamando funçaõ para setar false no enable dos botẽs*/
-            controleBotoes(false);
-            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
-            candidatoVoto = verificandoCandidato();
-        }
+        clicandoNosNumeros(3);
     }//GEN-LAST:event_btnNum3ActionPerformed
 
     private void btnNum4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum4ActionPerformed
-        if(!primeiroDigito){
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 4 para o text do digito 1*/
-            texPrimeiroDigito.setText("  4");
-            primeiroDigito = true;
-        }else{
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 4 para o text do digito 2*/
-            texSegundoDigito.setText("  4");
-            /* Chamando funçaõ para setar false no enable dos botẽs*/
-            controleBotoes(false);
-            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
-            candidatoVoto = verificandoCandidato();
-        }
+        clicandoNosNumeros(4);
     }//GEN-LAST:event_btnNum4ActionPerformed
 
     private void btnNum5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum5ActionPerformed
-        if(!primeiroDigito){
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 5 para o text do digito 1*/
-            texPrimeiroDigito.setText("  5");
-            /* Setando true para a variavel de controle*/
-            primeiroDigito = true;
-        }else{
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 5 para o text do digito 2*/
-            texSegundoDigito.setText("  5");
-            /* Chamando funçaõ para setar false no enable dos botẽs*/
-            controleBotoes(false);
-            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
-            candidatoVoto = verificandoCandidato();
-        }    
+        clicandoNosNumeros(5);
     }//GEN-LAST:event_btnNum5ActionPerformed
 
     private void btnNum6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum6ActionPerformed
-        if(!primeiroDigito){
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 6 para o text do digito 1*/
-            texPrimeiroDigito.setText("  6");
-            /* Setando true para a variavel de controle*/
-            primeiroDigito = true;
-        }else{
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 6 para o text do digito 2*/
-            texSegundoDigito.setText("  6");
-            /* Chamando funçaõ para setar false no enable dos botẽs*/
-            controleBotoes(false);
-            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
-            candidatoVoto = verificandoCandidato();            
-        }
+        clicandoNosNumeros(6);
     }//GEN-LAST:event_btnNum6ActionPerformed
 
     private void btnNum7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum7ActionPerformed
-        if(!primeiroDigito){
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 7 para o text do digito 1*/
-            texPrimeiroDigito.setText("  7");
-            /* Setando true para a variavel de controle*/            
-            primeiroDigito = true;
-        }else{
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 7 para o text do digito 2*/
-            texSegundoDigito.setText("  7");
-            /* Chamando funçaõ para setar false no enable dos botẽs*/
-            controleBotoes(false);
-            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
-            candidatoVoto = verificandoCandidato();
-        }
+        clicandoNosNumeros(7);
     }//GEN-LAST:event_btnNum7ActionPerformed
 
     private void btnNum8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum8ActionPerformed
-        if(!primeiroDigito){
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 8 para o text do digito 1*/
-            texPrimeiroDigito.setText("  8");
-            /* Setando true para a variavel de controle*/
-            primeiroDigito = true;
-        }else{
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 8 para o text do digito 2*/
-            texSegundoDigito.setText("  8");
-            /* Chamando funçaõ para setar false no enable dos botẽs*/
-            controleBotoes(false);
-            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
-            candidatoVoto = verificandoCandidato();
-        }
+        clicandoNosNumeros(8);
     }//GEN-LAST:event_btnNum8ActionPerformed
 
     private void btnNum9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum9ActionPerformed
-        if(!primeiroDigito){
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 9 para o text do digito 1*/
-            texPrimeiroDigito.setText("  9");
-            /* Setando true para a variavel de controle*/
-            primeiroDigito = true;
-        }else{
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 9 para o text do digito 2*/
-            texSegundoDigito.setText("  9");
-            /* Chamando funçaõ para setar false no enable dos botẽs*/
-            controleBotoes(false);
-            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
-            candidatoVoto = verificandoCandidato();            
-        }
+        clicandoNosNumeros(9);
     }//GEN-LAST:event_btnNum9ActionPerformed
 
     private void btnNum0ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNum0ActionPerformed
-        if(!primeiroDigito){
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 0 para o text do digito 1*/
-            texPrimeiroDigito.setText("  0");
-            /* Setando true para a variavel de controle*/
-            primeiroDigito = true;
-        }else{
-            /* Som do Digito da urna*/
-            playSound("urnaDigito.wav");
-            /* Setando 0 para o text do digito 2*/
-            texSegundoDigito.setText("  0");
-            /* Chamando funçaõ para setar false no enable dos botẽs*/
-            controleBotoes(false);
-            /* Chamando função que verifica se o candidato é valido e retorna ele como parametro*/
-            candidatoVoto = verificandoCandidato();
-        }
+        clicandoNosNumeros(0);
     }//GEN-LAST:event_btnNum0ActionPerformed
 
     private void btnBrancoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrancoActionPerformed
         
-        lblCandidatoNome.setText("VOTO EM BRANCO");
-        lblCandidatoPartido.setText("");
-        votoBranco = true;        
+        /*O eleitor esta votando no presidente no momento*/
+        if (pnlPresidente.isVisible()){
+        
+            lblPreNome.setText("VOTO EM BRANCO");
+            lblPrePartido.setText("");
+            
+        /*O eleitor esta votando no deputado federal no momento*/
+        }else {
+            
+            lblDepNome.setText("VOTO EM BRANCO");
+            lblDepPartido.setText("");
+        }
+        
+        votoBranco = true;
         btnConfirmaActionPerformed(evt);
     }//GEN-LAST:event_btnBrancoActionPerformed
 
     private void btnConfirmaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConfirmaActionPerformed
         
-        /*
-          Voto nulo e voto em branco sao tratados do mesmo jeito neste software, ou seja
-          jogando nulo no candidato.
-        */
-        
-        /* Mudando o cursor para não clicar em nada na tela*/
-        this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-        
-        /*Evita pressionar confirmar sem antes ter preenchido os campos e se nao estiver pressionado voto em branco*/
-        if (texSegundoDigito.getText().equals("") && !votoBranco){
+        try {
+            /*
+              Voto nulo e voto em branco sao tratados do mesmo jeito neste software, ou seja
+              jogando nulo no candidato.
+            */
+
+            /* Mudando o cursor para não clicar em nada na tela*/
+            this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
             
-            /*Volta o cursor como estava*/
-            this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-            
-            return ;
-        }
-        
-        /*Se esse objeto estiver nulo e porque o usuario quer votar branco ou nulo*/
-        if (candidatoVoto != null){
-            
-            /* Percorrendo o vetor de candidatos*/
-            for(int i = 0; i < candidatos.length; ++i ){
+            /*O eleitor esta votando no presidente no momento*/
+            if (pnlPresidente.isVisible()){
+                
+                /*Evita pressionar confirmar sem antes ter preenchido os campos e se nao estiver pressionado voto em branco*/
+                if (texPreSegundoDigito.getText().equals("") && !votoBranco){
+                    return ;
+                }
+                
+                /*Se esse objeto estiver nulo e porque o usuario quer votar branco ou nulo*/
+                if (presidenteVoto != null){
 
-                /*Evita o erro de Null pointer exception*/
-                if(candidatos[i] != null){
+                    /* Percorrendo o vetor de candidatos*/
+                    for (Candidato candidato : candidatos) {
 
-                    /* Comparando se o numero digitado na urna e igual a de algum candidato*/                    
-                    if(candidatoVoto.getNumero() == candidatos[i].getNumero()){
+                        /*Evita o erro de Null pointer exception*/
+                        if(candidato != null){
 
-                        /* Acrescentando um voto para o candidato escolhido*/
-                        candidatos[i].setQtdeVoto(1);
+                            /* Comparando se o numero digitado na urna e igual a de algum candidato*/                    
+                            if(presidenteVoto.getNumero() == candidato.getNumero()){
 
-                        break;
+                                /* Acrescentando um voto para o candidato escolhido*/
+                                candidato.setQtdeVoto(1);
+
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+            /*O eleitor esta votando no deputado federal no momento*/
+            }else {
+                
+                /*Evita pressionar confirmar sem antes ter preenchido os campos e se nao estiver pressionado voto em branco*/
+                if (texDepQuartoDigito.getText().equals("") && !votoBranco){
+                    return ;
+                }
+                
+                /*Se esse objeto estiver nulo e porque o usuario quer votar branco ou nulo*/
+                if (deputadoFederalVoto != null){
+
+                    /* Percorrendo o vetor de candidatos*/
+                    for (Candidato candidato : candidatos) {
+
+                        /*Evita o erro de Null pointer exception*/
+                        if(candidato != null){
+
+                            /* Comparando se o numero digitado na urna e igual a de algum candidato*/                    
+                            if(deputadoFederalVoto.getNumero() == candidato.getNumero()){
+
+                                /* Acrescentando um voto para o candidato escolhido*/
+                                candidato.setQtdeVoto(1);
+
+                                break;
+                            }
+                        }
                     }
                 }
             }
-        }
-        
-        /* Colocando true para o eleitor que acabou de votar*/
-        eleitor.setVotou(true);
-            
-        /* Criando uma variavel do tipo FileWriter*/
-        FileWriter arq = null;
-        try {
-            /* Criando um arquivo Json sem nada dentro*/
-            arq = new FileWriter("./ArquivosJson/Candidato.json");
 
-            /* Fechando o arquivo*/
-            arq.close();
+            /* Criando uma variavel do tipo FileWriter*/
+            FileWriter arq = null;
+            try {
+                /* Criando um arquivo Json sem nada dentro*/
+                arq = new FileWriter("./ArquivosJson/Candidato.json");
 
-            /* Colocando null na variavel arq para reutiliza-la*/
-            arq = null;
+                /* Fechando o arquivo*/
+                arq.close();
 
-            /* Criando um arquivo Json sem nada dentro*/
-            arq = new FileWriter("./ArquivosJson/Eleitor.json");
-
-            /* Fechando o arquivo*/
-            arq.close();
-
-        } catch (IOException ex) {
-            Logger.getLogger(Urna.class.getName()).log(Level.SEVERE, null, ex);
-        }
-            
-        /* Laco do tamanho do vetor de candidatos*/            
-        for(int i =0; i < candidatos.length; i++){
-
-            /*Evita o null pointer exception*/
-            if(candidatos[i] != null){
-
-                /* Inserindo no arquivo Json, os dados atualizados dos candidatos*/
-                candidatoDAO.inserirJson(candidatos[i]);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Houve um erro ao criar o .json do candidato", "Erro", JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
             }
-        }
-            
-        /* Laco do tamanho do vetor de eleitores*/
-        for(int i =0; i < eleitores.length; i++){
-            
-            /*Evita o null pointer exception*/
-            if(eleitores[i] != null){
+
+            /* Laco do tamanho do vetor de candidatos*/            
+            for (Candidato candidato : candidatos) {
+
+                /*Evita o null pointer exception*/
+                if(candidato != null){
+
+                    /* Inserindo no arquivo Json, os dados atualizados dos candidatos*/
+                    try {
+                        candidatoDAO.inserirJson(candidato);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Houve algum erro ao salvar os candidatos no arquivo json.", "Erro", JOptionPane.ERROR_MESSAGE);
+                        System.exit(0);
+                    }
+                }
+            }
+
+            /* Som do Confirma da Urna*/
+            playSound("urnaConfirma.wav");
+
+            /*Se o panel do presidente estiver visivel ainda e porque ainda nao votou no deputado federal*/
+            if (pnlPresidente.isVisible()) {
                 
-                /* Inserindo no arquivo Json, os dados atualizados do eleitor em relacao aos votos*/
-                eleitorDAO.inserirJson(eleitores[i]);
+                pnlPresidente.setVisible(false);
+                pnlDeputadoFederal.setVisible(true);
+                
+                votoBranco = false;
+                
+                return ;
             }
-        }
-        
-        /* Som do Confirma da Urna*/
-        playSound("urnaConfirma.wav");
-        
-        /* Desabilitando a tela da urna*/
-        desabilitandoTelaUrna();
             
-        /* Guardando o CPF do eleitor para contabilizar os votos*/
-        votoContabilizar.setCpfEleitor(eleitor.getCpf());
-        
-        /* Guardando o candidato que o eleitor votou (se votou nulo ou branco esse variavel estara nula)*/
-        votoContabilizar.setCandidato(candidatoVoto);
-        
-        if ((votoDAO.inserir(votoContabilizar)     == false) || /* Colocando o voto no vetor de votos*/
-            (votoDAO.inserirJson(votoContabilizar) == false) || /* Colocando o voto no arquivo JSON*/
-            (eleitorDAO.enviaDrive()               == false) || /* Enviando o vetor de eleitores para o Drive*/
-            (candidatoDAO.enviaDrive()             == false) || /* Enviando o vetor de candidatos para o Drive*/
-            (votoDAO.enviaDrive()                  == false)){  /* Enviando o vetor de votos para o Drive*/
+            /*Se chegou aqui e porque ja votou no deputado federal*/
             
-            return ;
+            /* Colocando true para o eleitor que acabou de votar*/
+            eleitor.setVotou(true);
+            
+            /* Criando uma variavel do tipo FileWriter*/
+            try {
+
+                /* Criando um arquivo Json sem nada dentro*/
+                arq = new FileWriter("./ArquivosJson/Eleitor.json");
+
+                /* Fechando o arquivo*/
+                arq.close();
+
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Houve um erro ao criar o .json do eleitor", "Erro", JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
+            }
+            
+            /* Laco do tamanho do vetor de eleitores*/
+            for (Eleitor eleitore : eleitores) {
+
+                /*Evita o null pointer exception*/
+                if(eleitore != null){
+
+                    /* Inserindo no arquivo Json, os dados atualizados do eleitor em relacao aos votos*/
+                    try {
+                        eleitorDAO.inserirJson(eleitore);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Houve algum erro ao salvar os eleitores no arquivo json.", "Erro", JOptionPane.ERROR_MESSAGE);
+                        return ;
+                    }
+                }
+            }
+            
+            /* Desabilitando a tela da urna*/
+            desabilitandoTelaUrna();
+
+            /* Guardando o CPF do eleitor para contabilizar os votos*/
+            voto.setCpfEleitor(eleitor.getCpf());
+
+            /* Guardando o presidente que o eleitor votou (se votou nulo ou branco esse variavel estara nula)*/
+            voto.setPresidente(presidenteVoto);
+            
+            /* Guardando o deputado federal que o eleitor votou (se votou nulo ou branco esse variavel estara nula)*/
+            voto.setDeputadoFederal(deputadoFederalVoto);
+
+            /* Colocando o voto no vetor de votos*/
+            votoDAO.inserir(voto);
+            
+            /* Colocando o voto no arquivo JSON*/
+            try {
+                votoDAO.inserirJson(voto);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Houve algum erro ao salvar o voto no arquivo json.", "Erro", JOptionPane.ERROR_MESSAGE);
+                return ;
+            }
+                    
+            /*Antes de fazer algo usando a conexao verifica primeiro se tem internet*/
+            if (!Conexao.getInternet()){
+                JOptionPane.showMessageDialog(this, "Sem acesso a internet.", "Erro", JOptionPane.ERROR_MESSAGE);
+                return ;
+            }
+            
+            /*Envia os arquivos .json para drive, sao usadas Threads para ficar mais rapido o processo*/
+            mensagem = "";
+                
+            /* Enviando o vetor de eleitores para o Drive*/
+            Thread p = new Thread(){
+                @Override
+                public void run() {
+                    try {
+                        eleitorDAO.enviaDrive();
+                    }catch(Exception e){
+                        mensagem = "Houve um erro ao enviar os eleitores para drive.";
+                    }
+                }            
+            };
+
+            /* Enviando o vetor de candidatos para o Drive*/
+            Thread c = new Thread(){
+                @Override
+                public void run() {
+                    try {
+                        candidatoDAO.enviaDrive();
+                    }catch(Exception e){
+                        mensagem = "Houve um erro ao enviar os candidatos para drive.";
+                    }
+                }            
+            };
+
+            /* Enviando o vetor de votos para o Drive*/
+            Thread v = new Thread(){
+                @Override
+                public void run() {
+                    try {
+                        votoDAO.enviaDrive();
+                    }catch(Exception e){
+                        mensagem = "Houve um erro ao enviar os votos para drive.";
+                    }
+                }            
+            };
+
+            /*Inicia a execucao das threads*/
+            p.start();
+            c.start();
+            v.start();
+
+            /*Espera cada Thread ser finalizada para prosseguir*/
+            try {
+
+                p.join();
+                p.interrupt();
+                c.join();
+                c.interrupt();
+                v.join();
+                v.interrupt();
+
+                if (!mensagem.equals("")){
+                    JOptionPane.showMessageDialog(this, mensagem, "Erro", JOptionPane.ERROR_MESSAGE);
+                    return ;
+                }
+
+            } catch (InterruptedException ex) {
+                JOptionPane.showMessageDialog(this, "Houve algum erro ao enviar os arquivos .json para o drive.", "Erro", JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
+            }
+
+            /* Fechando a urna*/
+            this.dispose();
+        
+        } finally {
+            /*Volta o cursor como estava*/
+            this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         }
-        
-        /* Fechando a urna*/
-        this.dispose();
-        
-        /*Volta o cursor como estava*/
-        this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));        
     }//GEN-LAST:event_btnConfirmaActionPerformed
-    
  
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnBranco;
@@ -1156,7 +1404,16 @@ public class Urna extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private java.awt.Label label1;
+    private java.awt.Label label10;
+    private java.awt.Label label11;
+    private java.awt.Label label12;
+    private java.awt.Label label13;
+    private java.awt.Label label14;
+    private java.awt.Label label16;
+    private java.awt.Label label17;
+    private java.awt.Label label18;
     private java.awt.Label label2;
+    private java.awt.Label label21;
     private java.awt.Label label3;
     private java.awt.Label label4;
     private java.awt.Label label5;
@@ -1164,13 +1421,21 @@ public class Urna extends javax.swing.JFrame {
     private java.awt.Label label7;
     private java.awt.Label label8;
     private java.awt.Label label9;
-    private java.awt.Label lblCandidatoNome;
-    private java.awt.Label lblCandidatoPartido;
+    private java.awt.Label lblDepNome;
+    private java.awt.Label lblDepPartido;
+    private java.awt.Label lblPreNome;
+    private java.awt.Label lblPrePartido;
     private java.awt.Panel panel1;
     private java.awt.Panel panel2;
     private java.awt.Panel panel3;
     private java.awt.Panel panelIcone;
-    private java.awt.TextField texPrimeiroDigito;
-    private java.awt.TextField texSegundoDigito;
+    private java.awt.Panel pnlDeputadoFederal;
+    private java.awt.Panel pnlPresidente;
+    private java.awt.TextField texDepPrimeiroDigito;
+    private java.awt.TextField texDepQuartoDigito;
+    private java.awt.TextField texDepSegundoDigito;
+    private java.awt.TextField texDepTerceiroDigito;
+    private java.awt.TextField texPrePrimeiroDigito;
+    private java.awt.TextField texPreSegundoDigito;
     // End of variables declaration//GEN-END:variables
 }

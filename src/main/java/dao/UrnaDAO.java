@@ -3,10 +3,14 @@ package dao;
 public class UrnaDAO {
 
     private int codigo;
-    private VotoDAO votoDAO = new VotoDAO();
-
+    private VotoDAO votoDAO;
+    
+    /**
+     * Construtor sem parâmetro - Inicia as variáveis.
+     */
     public UrnaDAO(){
-        this.codigo = 1; /*Esta sendo utilizada somente UMA urna*/
+        this.codigo  = 1; /*Esta sendo utilizada somente UMA urna*/
+        this.votoDAO = new VotoDAO();
     }
     
     /**

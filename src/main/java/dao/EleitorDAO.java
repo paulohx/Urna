@@ -3,10 +3,11 @@ package dao;
 import com.google.gson.Gson;
 import java.io.FileWriter;
 import java.io.PrintWriter;
-import javax.swing.JOptionPane;
-import modelo.CadEleitor;
+import modelo.Eleitor;
 import conexao.Conexao;
+import excecoes.IgualdadeDeObjetosException;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -15,111 +16,104 @@ import java.util.List;
 public class EleitorDAO {
     
     /*Vetor de eleitores*/
-    private CadEleitor eleitores[] = new CadEleitor[50];
+    private List<Eleitor> eleitores;
 
-    /** Insere o eleitor na primeira posição vazia que achar do vetor.
-     * @param eleitores É passado um obejto inteiro de eleitor para a inserção.
-     * @return boolean - Se ocorreu tudo certo na inserção então retorna true, caso contrário retorna false.
+    /**
+     * Construtor sem parâmetro - Instancia o vetor.
      */
-    public boolean inserir(CadEleitor eleitores) {
-
-        for (int i = 0; i < this.eleitores.length; i++) {			
-            if (this.eleitores[i] == null) {
-                this.eleitores[i] = eleitores;
-                return true;
-            }
-        }
-        return false;
+    public EleitorDAO() {
+        eleitores = new ArrayList();
+    }
+    
+    /**
+     * Insere o eleitor no vetor.
+     * @param eleitor É passado um objeto inteiro de eleitor para a inserção.
+     */
+    public void inserir(Eleitor eleitor) {
+        this.eleitores.add(eleitor);
     }
     
     /**
      * Função utilizada com o intúido de retornar o vetor inteiro de eleitores.
-     * @return CadEleitor[] - Retorna o vetor de eleitores.
+     * @return List (Eleitor) - Retorna o vetor de eleitores.
      */
-    public CadEleitor [] getVetorEleitor(){
+    public List<Eleitor> getVetorEleitor(){
         return this.eleitores;
     }
     
     /**
      * Verifica se existe no vetor um eleitor idêntico ao passado por parâmetro.
      * @param e O Objeto inteiro do eleitor é passado para verificar no vetor se tem algum igual.
-     * @return String - Retorna o campo em que há a igualdade e caso não haver, retorna "".
+     * @throws IgualdadeDeObjetosException - Caso há um cadastro com o mesmo item de determinado campo.
      */
-    public String igualdadeEleitor(CadEleitor e){
+    public void igualdadeEleitor(Eleitor e) throws IgualdadeDeObjetosException {
         
-        for (int i = 0; i < eleitores.length; i++) {
+        String campo = "";
+        
+        for (Eleitor eleitor : this.eleitores) {
             
             /*Trata o null pointer exception*/
-            if (eleitores[i] != null){
+            if (eleitor != null){
                 
-                /*Verifica se o cpf e igual*/
-                if (eleitores[i].getCpf().equals(e.getCpf())){
-                    return "CPF";
+                /*Verifica se a imagem e igual*/
+                if (eleitor.getImagem().equals(e.getImagem())){
+                    campo = "IMAGEM";
                 }
                 
                 /*Verifica se o titulo e igual*/
-                if (eleitores[i].getNumeroTitulo().equals(e.getNumeroTitulo())){
-                    return "TITULO";
+                if (eleitor.getNumeroTitulo().equals(e.getNumeroTitulo())){
+                    campo = "TITULO";
                 }
                 
-                /*Verifica se a imagem e igual*/
-                if (eleitores[i].getImagem().equals(e.getImagem())){
-                    return "IMAGEM";
+                /*Verifica se o cpf e igual*/
+                if (eleitor.getCpf().equals(e.getCpf())){
+                    campo = "CPF";
                 }
             }
         }
         
-        return "";
+        if (!campo.equals("")){
+            throw new IgualdadeDeObjetosException("Há um cadastro com o mesmo item do campo " + campo + "...");            
+        }
     }
     
     /**
      * Utilizada para baixar o Eleitor.json do Google Drive.
      * @throws IOException 
      */
-    public void baixarEleitorJson() throws IOException{
+    public void baixarEleitorJson() throws Exception {
         
         Gson gson = new Gson();
         
         /*Auxiliar para pegar o conteudo do arquivo*/
-        String aux = null;        
-        try {
+        String aux = null;
             
-            /*Verifica se a pasta existe*/
-            String idPas = Conexao.existePasta("ArquivosJson"); 
-            if (!(idPas.equals(""))){
-                
-                /*Verifica se o arquivo existe*/
-                String idArq = Conexao.existeArquivo("Eleitor.json");            
-                if (!(idArq.equals(""))){
+        /*Verifica se a pasta existe*/
+        String idPas = Conexao.existePasta("ArquivosJson"); 
+        if (!(idPas.equals(""))){
 
-                    /*Se existir o arquivo coloca nessa variavel o conteudo dele*/
-                    aux = Conexao.printFile(idArq);
-                }
+            /*Verifica se o arquivo existe*/
+            String idArq = Conexao.existeArquivo("Eleitor.json");            
+            if (!(idArq.equals(""))){
+
+                /*Se existir o arquivo coloca nessa variavel o conteudo dele*/
+                aux = Conexao.printFile(idArq);
             }
-            
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Não foi possível baixar os dados dos eleitores, verifique sua conexão com a internet..", "Erro", JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
         }
         
         /*Caso esta variavel esteja nula e porque nao ha o arquivo para baixar ou ele esta vazio*/
         if (aux != null){
-        
-            /*Cria um vetor dinamico de eleitores*/
-            List <CadEleitor> eleitor = new ArrayList<>();
 
+            /*Exclui o .json que estava local*/
+            File arq = new File("./ArquivosJson/Eleitor.json");
+            arq.delete();
+            
             /*Transforma cada linha do json em objeto do tipo eleitor e adiciona no vetor dinamico*/
             BufferedReader verifica = new BufferedReader(new StringReader(aux));        
             String linha;        
             while((linha = verifica.readLine()) != null){
-                eleitor.add(gson.fromJson(linha, CadEleitor.class)); 
-            }
-
-            /*Joga no vetor estatico cada posicao do vetor dinamico*/
-            for (int i = 0; i < eleitor.size(); i++) {
-                if(this.eleitores[i] == null){
-                    this.eleitores[i] = eleitor.get(i);
-                }
+                eleitores.add(gson.fromJson(linha, Eleitor.class)); 
+                inserirJson(gson.fromJson(linha, Eleitor.class));
             }
         }
     }
@@ -127,68 +121,52 @@ public class EleitorDAO {
     /**
      * Insere no arquivo Eleitor.json um objeto do tipo eleitor.
      * @param eleitor Insere um objeto inteiro do tipo eleitor no arquivo json.
-     * @return boolean - Retorna true caso conseguiu realizar a inserção e false caso ocorreu algo de errado.
+     * @throws Exception 
      */
-    public boolean inserirJson(CadEleitor eleitor){
+    public void inserirJson(Eleitor eleitor) throws Exception {
+        
+        /*Verifica se a pasta local esta criada*/
+        File dir = new File("ArquivosJson");
+        
+        /*Caso nao estiver entao cria*/
+        dir.mkdirs();
         
         Gson gson = new Gson();
         
-        FileWriter arq = null;
-        try {
-            arq = new FileWriter("./ArquivosJson/Eleitor.json", true);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Houve algum erro ao salvar o eleitor no arquivo json", "Erro", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
+        FileWriter arq = new FileWriter("./ArquivosJson/Eleitor.json", true);
         
         PrintWriter escreveArq = new PrintWriter(arq);
         escreveArq.printf("%s\n", gson.toJson(eleitor));
         
-        try {
-            arq.close();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Houve algum erro ao fechar o arquivo json", "Erro", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-        
-        return true;
+        arq.close();
     }
     
     /**
      * Envia o Eleitor.json local para o Google Drive.
-     * @return boolean - Retorna true caso conseguiu realizar o envio e false caso ocorreu algo de errado.
+     * @throws Exception 
      */
-    public boolean enviaDrive(){
-        
-        try {
+    public void enviaDrive() throws Exception {
             
-            /*Verifica se existe essa pasta no Google Drive*/
-            String idPas = Conexao.existePasta("ArquivosJson");            
-            if (idPas.equals("")){
-                
-                /*Se a pasta nao existir entao cria*/
-                idPas = Conexao.criaPasta(Conexao.service(), "ArquivosJson");    
-            }
-            
-            /*Verifica se existe esse arquivo no Google Drive*/
-            String idArq = Conexao.existeArquivo("Eleitor.json");
-            if (idArq.equals("")){                
-                
-                /*Se o arquivo nao existir entao cria*/
-                idArq = Conexao.enviaArquivo(idPas, "Eleitor.json");
-            }
-            
-            /*Remove o arquivo que esta no drive para nao criar varios dele mesmo*/
-            Conexao.removeArquivo(idArq);
-            
-            /*Por fim, envia o json local para la*/
-            Conexao.enviaArquivo(idPas, "Eleitor.json");
-            
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Houve erro ao conectar com o drive para salvar o arquivo..", "Erro", JOptionPane.ERROR_MESSAGE);
-            return false;
+        /*Verifica se existe essa pasta no Google Drive*/
+        String idPas = Conexao.existePasta("ArquivosJson");            
+        if (idPas.equals("")){
+
+            /*Se a pasta nao existir entao cria*/
+            idPas = Conexao.criaPasta(Conexao.service(), "ArquivosJson");    
         }
-        
-        return true;
+
+        /*Verifica se existe esse arquivo no Google Drive*/
+        String idArq = Conexao.existeArquivo("Eleitor.json");
+        if (idArq.equals("")){                
+
+            /*Se o arquivo nao existir entao cria*/
+            idArq = Conexao.enviaArquivo(idPas, "Eleitor.json");
+        }
+
+        /*Remove o arquivo que esta no drive para nao criar varios dele mesmo*/
+        Conexao.removeArquivo(idArq);
+
+        /*Por fim, envia o json local para la*/
+        Conexao.enviaArquivo(idPas, "Eleitor.json");
     }
 }

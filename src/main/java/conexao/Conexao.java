@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ByteArrayOutputStream;
+import java.net.URL;
+import java.net.URLConnection;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,18 +45,33 @@ public class Conexao {
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
 
     /**
-     * Construtor da classe - onde se inicia a variavel do servico
+     * Construtor da classe - onde se inicia a variável do serviço.
+     * @throws IOException
+     * @throws GeneralSecurityException
+     * @throws NullPointerException 
      */
-    private Conexao(){
+    private Conexao() throws IOException, GeneralSecurityException, NullPointerException {
+            
+        NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+    }
+    
+    /**
+     * Verifica se o pc tem internet, verifica a conexão com o servidor do Google que é raro ficar fora do ar.
+     * @return boolean - Retorna verdadeiro se conseguiu conexão com a internet, caso contrário retorna falso.
+     */
+    public static boolean getInternet() {
         
         try {
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
-                          .setApplicationName(APPLICATION_NAME)
-                          .build();
-        } catch (Exception e) {
-            e.getMessage();
-        }        
+            URL url = new URL("https://www.google.com/");
+            URLConnection connection = url.openConnection();
+            connection.connect();
+            return true;
+        } catch (IOException ex) {
+            return false;
+        }   
     }
     
     /**
@@ -63,7 +80,7 @@ public class Conexao {
      * @return Credential - Um objeto de credencial autorizado.
      * @throws IOException se o arquivo de credentials.json não for encontrado.
      */
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+    private static Credential getCredentials(NetHttpTransport HTTP_TRANSPORT) throws IOException {
 
         /*Carrega os "secredos" do cliente*/
         InputStream in = Conexao.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
@@ -81,18 +98,22 @@ public class Conexao {
     
     /**
      * Caso o serviço ainda não esteja instânciado então instância.
-     * @return Drive - O servico
+     * @return Drive - O serviço.
+     * @throws IOException
+     * @throws GeneralSecurityException
+     * @throws NullPointerException 
      */
-    public static Drive service() {
+    public static Drive service() throws IOException, GeneralSecurityException, NullPointerException {
         
+        /*Se o servico estiver nulo, cria um novo servico*/
         if (service == null) {
-            new Conexao();
+            Conexao conexao = new Conexao();
         }
         return service;
     }
     
     /**
-     * Verifica se existe essa pasta no Google Drive.
+     * Verifica se existe determinada pasta no Google Drive.
      * @param nome Nome da pasta.
      * @return String - Retorna o id dessa pasta ou se ela não existir retorna "".
      * @throws IOException
@@ -177,6 +198,7 @@ public class Conexao {
         
         return file.getId();        
     }
+    
     /**
      * Remove um arquivo do Google Drive.
      * @param idArquivo Id do arquivo que você quer remover.
@@ -210,9 +232,9 @@ public class Conexao {
     /**
      * Mostra o conteúdo de um arquivo do Google Drive.
      * @param idArquivo Id do arquivo que queria imprimir.
-     * @return String - Retorna o conteúdo do arquivo em forma de String;
+     * @return String - Retorna o conteúdo do arquivo em forma de String.
      * @throws IOException
-     * @throws GeneralSecurityException 
+     * @throws GeneralSecurityException
      */
     public static String printFile(String idArquivo) throws IOException, GeneralSecurityException{
 

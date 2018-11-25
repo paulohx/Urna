@@ -7,12 +7,15 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
-import modelo.CadEleitor;
+import modelo.Eleitor;
 import dao.UrnaDAO;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.ColorModel;
 import java.awt.image.MemoryImageSource;
+import java.io.File;
+import java.security.GeneralSecurityException;
+import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import util.PPMFileReader;
@@ -22,9 +25,8 @@ import util.PGMImage;
 public class Login extends javax.swing.JFrame {
     
     EleitorDAO eleitorDAO = new EleitorDAO();
-    UrnaDAO    urna       = new UrnaDAO();     
-    CadEleitor eleitor    = new CadEleitor();
-
+    UrnaDAO    urna       = new UrnaDAO();
+            
     /**
      * Construtor da classe sem parâmetro.
      * @throws IOException 
@@ -38,13 +40,43 @@ public class Login extends javax.swing.JFrame {
         this.setLocationRelativeTo(null);
         this.setExtendedState(HIDE_ON_CLOSE);
         
-        /*Iniciando servico e baixa do drive caso o banco de dados esteja preenchida*/
-        Conexao.service();
+        /*Verifica se a pasta local esta criada*/
+        File dir = new File("ArquivosJson");
+        
+        /*Caso nao estiver entao cria*/
+        dir.mkdirs();
+
+        /*Antes de fazer algo usando a conexao verifica primeiro se tem internet*/
+        if (!Conexao.getInternet()){
+            JOptionPane.showMessageDialog(this, "Sem acesso a internet.", "Erro", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        }
+        
+        /*Iniciando o servico do drive*/
+        try {
+            Conexao.service();
+        } catch (GeneralSecurityException ex) {
+            JOptionPane.showMessageDialog(this, "Houve algum erro de segurança ao tentar conectar no drive.", "Erro", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Houve algum erro de entrada e saída.", "Erro", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        } catch (NullPointerException ex) {
+            JOptionPane.showMessageDialog(this, "Credenciais não encontradas.", "Erro", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        }
+        
         Login.setEnabled(false);
-        eleitorDAO.baixarEleitorJson();
+        
+        try {
+            eleitorDAO.baixarEleitorJson();
+        }catch(Exception e) {
+            JOptionPane.showMessageDialog(this, "Houve um erro ao baixar os votos do drive.", "Erro", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        }
     }
     
-    CadEleitor eleitores[] = eleitorDAO.getVetorEleitor();
+    List<Eleitor> eleitores = eleitorDAO.getVetorEleitor();
      
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -90,7 +122,7 @@ public class Login extends javax.swing.JFrame {
         texImagemEleitor.setEnabled(false);
 
         jLabel1.setFont(new java.awt.Font("Ubuntu", 1, 24)); // NOI18N
-        jLabel1.setText("    ELEIÇÕES PRESIDENCIAS 2018");
+        jLabel1.setText("    ELEIÇÕES 2018");
 
         jPanel1.setBackground(new java.awt.Color(122, 130, 190));
 
@@ -137,7 +169,7 @@ public class Login extends javax.swing.JFrame {
             .addGroup(panel1Layout.createSequentialGroup()
                 .addGap(149, 149, 149)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 234, Short.MAX_VALUE))
             .addGroup(panel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -145,13 +177,15 @@ public class Login extends javax.swing.JFrame {
                     .addGroup(panel1Layout.createSequentialGroup()
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnLocalizarImagem, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(12, 12, 12)
-                        .addComponent(texImagemEleitor)))
+                        .addGroup(panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(panel1Layout.createSequentialGroup()
+                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(panel1Layout.createSequentialGroup()
+                                .addComponent(btnLocalizarImagem, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(12, 12, 12)
+                                .addComponent(texImagemEleitor)))))
                 .addContainerGap())
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 417, Short.MAX_VALUE))
         );
         panel1Layout.setVerticalGroup(
             panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -229,70 +263,70 @@ public class Login extends javax.swing.JFrame {
 
     private void LoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginActionPerformed
         
-        /*Muda o cursor*/
-        this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-        
-        boolean imagemIgual = false;
-        
-        /*Verifica se a url da imagem esta vazia*/
-        if(!texImagemEleitor.getText().equals("")){
-            
-            /*Transforma a imagem seleciona em objeto*/
-            PPMImage PPM = PPMFileReader.readImage(texImagemEleitor.getText());
-            
-            /* Criando uma variavel PGM do tipo PGMImage*/
-            PGMImage PGM;
+        try {
+            /*Muda o cursor*/
+            this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
-            /* Atribuindo para a variavel PGM, a imagem convertida para PGM do eleitor*/
-            PGM = PPM.convertToPGM();
+            boolean imagemIgual = false;
 
-            /* Desenhando a imagem na tela*/
-            draw(PGM);
-            
-            for(int i = 0; i < eleitores.length; i++ ){
+            /*Verifica se a url da imagem esta vazia*/
+            if(!texImagemEleitor.getText().equals("")){
 
-                if(eleitores[i] != null){
-                    
-                    /* Comparando se a imagem selecionada e igual ao de algum eleitor*/                    
-                    if(eleitores[i].getImagem().equals(PPM)){
-                                                
-                        /*Entrou no if quer dizer que a imagem e igual*/
-                        imagemIgual = true;
-                        
-                        /* Se este eleitor ja votou (caso votou nao deixa ele entrar)*/
-                        if (eleitores[i].getVotou()){
-                            
-                            JOptionPane.showMessageDialog(this, eleitores[i].getNome() + " você não pode votar denovo", "Erro", JOptionPane.ERROR_MESSAGE);
-                            break;
-                            
-                        }else{
-                            
-                            /*Chegou aqui e porque a imagem esta certa E ele ainda nao votou*/                            
-                            JOptionPane.showMessageDialog(this, "Login efetuado com sucesso!");
-                            
-                            /* Instânciando a urna, passando os parametros e colocando ela visivel*/
-                            new Urna(eleitores[i], urna, eleitorDAO).setVisible(true);
-                            
-                            /* Fechando a tela de login*/
-                            this.dispose();
+                /*Transforma a imagem seleciona em objeto*/
+                PPMImage PPM = PPMFileReader.readImage(texImagemEleitor.getText());
+
+                /* Criando uma variavel PGM do tipo PGMImage*/
+                PGMImage PGM;
+
+                /* Atribuindo para a variavel PGM, a imagem convertida para PGM do eleitor*/
+                PGM = PPM.convertToPGM();
+
+                /* Desenhando a imagem na tela*/
+                draw(PGM);
+
+                for (Eleitor eleitor : eleitores) {
+
+                    if(eleitor != null){
+
+                        /* Comparando se a imagem selecionada e igual ao de algum eleitor*/                    
+                        if(eleitor.getImagem().equals(PPM)){
+
+                            /*Entrou no if quer dizer que a imagem e igual*/
+                            imagemIgual = true;
+
+                            /* Se este eleitor ja votou (caso votou nao deixa ele entrar)*/
+                            if (eleitor.getVotou()){
+
+                                JOptionPane.showMessageDialog(this, eleitor.getNome() + " você não pode votar denovo", "Erro", JOptionPane.ERROR_MESSAGE);
+                                break;
+
+                            }else{
+
+                                /*Chegou aqui e porque a imagem esta certa E ele ainda nao votou*/                            
+                                JOptionPane.showMessageDialog(this, "Login efetuado com sucesso!");
+                                
+                                /* Instânciando a urna, passando os parametros e colocando ela visivel*/
+                                new Urna(eleitor, urna, eleitorDAO).setVisible(true);
+
+                                /* Fechando a tela de login*/
+                                this.dispose();
+                            }
                         }
                     }
                 }
+
+                if (!imagemIgual){
+
+                    JOptionPane.showMessageDialog(this, "Não há nenhum eleitor cadastrado com essa imagem", "Erro", JOptionPane.ERROR_MESSAGE);
+
+                    texImagemEleitor.setText("");
+                }
             }
             
-            if (!imagemIgual){
-                
-                /*volta o cursor para o normal*/
-                this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-                
-                JOptionPane.showMessageDialog(this, "Não há nenhum eleitor cadastrado com essa imagem", "Erro", JOptionPane.ERROR_MESSAGE);
-                
-                texImagemEleitor.setText("");
-            }
+        } finally {
+            /*volta o cursor para o normal*/
+            this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         }
-
-        /*volta o cursor para o normal*/
-        this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_LoginActionPerformed
 
     /**
