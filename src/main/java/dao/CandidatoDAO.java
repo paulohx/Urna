@@ -56,12 +56,12 @@ public class CandidatoDAO {
             /*Trata o null pointer exception*/
             if (candidato != null) {
                 
-                /*Verifica se o partido e igual, SE SOMENTE SE O candidato for presidente*/
-                if (c instanceof Presidente) {
+                /*Verifica se o partido e igual, SE SOMENTE SE O candidato do VETOR E o passado por PARAMETRO forem presidentes*/
+                if ((candidato instanceof Presidente) && (c instanceof Presidente)) {
                     
-                    if ((candidato.getPartido().getNome().equals(((Presidente)c).getPartido().getNome())) ||
-                        (candidato.getPartido().getNumero() == ((Presidente)c).getPartido().getNumero())  ||
-                        (candidato.getPartido().getSigla().equals(((Presidente)c).getPartido().getSigla()))) {
+                    if ((candidato.getPartido().getNome().equals(c.getPartido().getNome())) ||
+                        (candidato.getNumero() == c.getNumero())  ||
+                        (candidato.getPartido().getSigla().equals(c.getPartido().getSigla()))) {
                         campo =  "PARTIDO";
                     }
                 }
